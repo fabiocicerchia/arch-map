@@ -1,0 +1,6 @@
+# Actions are pinned to full-length commit SHAs (see semgrep/kics), which
+# unavoidably pushes `uses:` lines past 80 chars.
+extends: relaxed
+rules:
+  line-length:
+    max: 120
