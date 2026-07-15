@@ -19,6 +19,58 @@ def test_tfstate_classic_format():
     assert {n["kind"] for n in nodes} == {"database", "queue"}
 
 
+def test_tfstate_gcp_and_azure_kinds():
+    state = {
+        "resources": [
+            {"type": "google_sql_database_instance", "name": "primary"},
+            {"type": "google_pubsub_topic", "name": "events"},
+            {"type": "azurerm_redis_cache", "name": "sessions"},
+            {"type": "azurerm_storage_account", "name": "assets"},
+        ]
+    }
+    nodes = nodes_from_tfstate(state)
+    assert {n["kind"] for n in nodes} == {"database", "queue", "cache", "store"}
+
+
+def test_tfstate_classic_format_module_grouping():
+    state = {
+        "resources": [
+            {"type": "aws_db_instance", "name": "main", "module": "module.db"},
+            {"type": "aws_sqs_queue", "name": "jobs"},
+        ]
+    }
+    nodes = nodes_from_tfstate(state)
+    modules = {n["id"]: n["module"] for n in nodes}
+    assert modules == {"aws_db_instance.main": "db", "aws_sqs_queue.jobs": ""}
+
+
+def test_tfstate_show_json_format_module_grouping():
+    state = {
+        "values": {
+            "root_module": {
+                "resources": [
+                    {"address": "aws_sqs_queue.jobs", "type": "aws_sqs_queue", "name": "jobs"},
+                ],
+                "child_modules": [
+                    {
+                        "address": "module.db",
+                        "resources": [
+                            {
+                                "address": "module.db.aws_db_instance.main",
+                                "type": "aws_db_instance",
+                                "name": "main",
+                            }
+                        ],
+                    }
+                ],
+            }
+        }
+    }
+    nodes = nodes_from_tfstate(state)
+    modules = {n["id"]: n["module"] for n in nodes}
+    assert modules == {"aws_sqs_queue.jobs": "", "module.db.aws_db_instance.main": "db"}
+
+
 def test_tfstate_show_json_format():
     state = {
         "values": {
@@ -47,6 +99,17 @@ def test_mermaid_output_shapes_and_edges():
 
 def test_sanitize_makes_valid_mermaid_ids():
     assert sanitize("aws_db_instance.my-db") == "aws_db_instance_my_db"
+
+
+def test_mermaid_output_groups_by_module():
+    nodes = [
+        {"id": "aws_db_instance.main", "kind": "database", "label": "RDS: main", "module": "db"},
+        {"id": "aws_sqs_queue.jobs", "kind": "queue", "label": "SQS: jobs", "module": ""},
+    ]
+    out = to_mermaid(nodes, [])
+    assert 'subgraph db ["module: db"]' in out
+    assert "aws_db_instance_main" in out
+    assert out.index("subgraph db") < out.index("aws_db_instance_main")
 
 
 def test_edges_from_env_dsns_matches_datastore_by_name():

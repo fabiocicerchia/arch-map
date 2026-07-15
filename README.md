@@ -54,7 +54,7 @@ adds a queue" is visible in the diagram diff.
       workloads/ingress, Mermaid out
 - [x] Service→datastore edges from env-var heuristics (DSN parsing)
 - [x] C4 levels: `--level context|container|component`
-- [ ] More TF providers (GCP/Azure mappings), module grouping
+- [x] More TF providers (GCP/Azure mappings), module grouping
 - [ ] PlantUML/D2 output
 
 ## Development
