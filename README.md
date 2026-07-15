@@ -20,6 +20,18 @@ Produces a GitHub-native Mermaid flowchart: workloads (with replica counts),
 ingresses with hostnames, databases, queues, buckets, caches and edges —
 grouped by kind, ingress→service edges wired from selectors.
 
+## Install
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/fabiocicerchia/arch-map/main/install.sh | bash
+```
+
+Or with pipx directly:
+
+```sh
+pipx install git+https://github.com/fabiocicerchia/arch-map
+```
+
 ## CI recipe
 
 ```yaml
