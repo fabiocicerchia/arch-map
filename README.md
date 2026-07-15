@@ -52,7 +52,7 @@ adds a queue" is visible in the diagram diff.
 
 - [x] Terraform state (both classic and `show -json` shapes), K8s
       workloads/ingress, Mermaid out
-- [ ] Service→datastore edges from env-var heuristics (DSN parsing)
+- [x] Service→datastore edges from env-var heuristics (DSN parsing)
 - [ ] C4 levels: `--level context|container|component`
 - [ ] More TF providers (GCP/Azure mappings), module grouping
 - [ ] PlantUML/D2 output

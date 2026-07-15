@@ -1,4 +1,4 @@
-from arch_map import nodes_from_tfstate, sanitize, to_mermaid
+from arch_map import edges_from_env_dsns, nodes_from_tfstate, sanitize, to_mermaid
 
 
 def test_tfstate_classic_format():
@@ -41,3 +41,21 @@ def test_mermaid_output_shapes_and_edges():
 
 def test_sanitize_makes_valid_mermaid_ids():
     assert sanitize("aws_db_instance.my-db") == "aws_db_instance_my_db"
+
+
+def test_edges_from_env_dsns_matches_datastore_by_name():
+    nodes = [
+        {"id": "k8s.api", "kind": "service", "label": "api ×3"},
+        {"id": "aws_db_instance.main", "kind": "database", "label": "RDS: main"},
+    ]
+    env_by_workload = {
+        "k8s.api": ["postgres://user:pw@main.abc123.us-east-1.rds.amazonaws.com:5432/prod"]
+    }
+    edges = edges_from_env_dsns(nodes, env_by_workload)
+    assert edges == [("k8s.api", "aws_db_instance.main", "postgres")]
+
+
+def test_edges_from_env_dsns_no_match():
+    nodes = [{"id": "aws_db_instance.main", "kind": "database", "label": "RDS: main"}]
+    env_by_workload = {"k8s.api": ["not a dsn", "SOME_FLAG=true"]}
+    assert edges_from_env_dsns(nodes, env_by_workload) == []
