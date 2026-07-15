@@ -55,7 +55,7 @@ adds a queue" is visible in the diagram diff.
 - [x] Service→datastore edges from env-var heuristics (DSN parsing)
 - [x] C4 levels: `--level context|container|component`
 - [x] More TF providers (GCP/Azure mappings), module grouping
-- [ ] PlantUML/D2 output
+- [x] PlantUML/D2 output
 
 ## Development
 

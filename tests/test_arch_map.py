@@ -3,7 +3,9 @@ from arch_map import (
     edges_from_env_dsns,
     nodes_from_tfstate,
     sanitize,
+    to_d2,
     to_mermaid,
+    to_plantuml,
 )
 
 
@@ -128,6 +130,34 @@ def test_edges_from_env_dsns_no_match():
     nodes = [{"id": "aws_db_instance.main", "kind": "database", "label": "RDS: main"}]
     env_by_workload = {"k8s.api": ["not a dsn", "SOME_FLAG=true"]}
     assert edges_from_env_dsns(nodes, env_by_workload) == []
+
+
+def test_plantuml_output_shapes_and_edges():
+    nodes = [
+        {"id": "k8s.api", "kind": "service", "label": "api ×3"},
+        {"id": "aws_db_instance.main", "kind": "database", "label": "RDS: main"},
+    ]
+    edges = [("k8s.api", "aws_db_instance.main", "sql")]
+    out = to_plantuml(nodes, edges)
+    assert out.startswith("```plantuml\n@startuml")
+    assert out.endswith("@enduml\n```")
+    assert 'component "api ×3" as k8s_api' in out
+    assert 'database "RDS: main" as aws_db_instance_main' in out
+    assert "k8s_api --> aws_db_instance_main : sql" in out
+
+
+def test_d2_output_shapes_and_edges():
+    nodes = [
+        {"id": "k8s.api", "kind": "service", "label": "api ×3"},
+        {"id": "aws_db_instance.main", "kind": "database", "label": "RDS: main"},
+    ]
+    edges = [("k8s.api", "aws_db_instance.main", "sql")]
+    out = to_d2(nodes, edges)
+    assert out.startswith("```d2\n")
+    assert out.endswith("```")
+    assert 'k8s_api: "api ×3" {shape: rectangle}' in out
+    assert 'aws_db_instance_main: "RDS: main" {shape: cylinder}' in out
+    assert 'k8s_api -> aws_db_instance_main: "sql"' in out
 
 
 def test_collapse_to_context_groups_by_kind():
