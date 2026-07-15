@@ -1,4 +1,10 @@
-from arch_map import edges_from_env_dsns, nodes_from_tfstate, sanitize, to_mermaid
+from arch_map import (
+    collapse_to_context,
+    edges_from_env_dsns,
+    nodes_from_tfstate,
+    sanitize,
+    to_mermaid,
+)
 
 
 def test_tfstate_classic_format():
@@ -59,3 +65,21 @@ def test_edges_from_env_dsns_no_match():
     nodes = [{"id": "aws_db_instance.main", "kind": "database", "label": "RDS: main"}]
     env_by_workload = {"k8s.api": ["not a dsn", "SOME_FLAG=true"]}
     assert edges_from_env_dsns(nodes, env_by_workload) == []
+
+
+def test_collapse_to_context_groups_by_kind():
+    nodes = [
+        {"id": "k8s.api", "kind": "service", "label": "api"},
+        {"id": "k8s.worker", "kind": "service", "label": "worker"},
+        {"id": "aws_db_instance.main", "kind": "database", "label": "RDS: main"},
+    ]
+    edges = [
+        ("k8s.api", "aws_db_instance.main", "sql"),
+        ("k8s.worker", "aws_db_instance.main", "sql"),
+    ]
+    cnodes, cedges = collapse_to_context(nodes, edges)
+    assert {n["id"]: n["label"] for n in cnodes} == {
+        "group_service": "service (2)",
+        "group_database": "database (1)",
+    }
+    assert cedges == [("group_service", "group_database", "")]
