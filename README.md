@@ -48,15 +48,6 @@ pipx install git+https://github.com/fabiocicerchia/arch-map
 Bonus: the diff itself is an architecture-change review artifact — "this PR
 adds a queue" is visible in the diagram diff.
 
-## Status & roadmap
-
-- [x] Terraform state (both classic and `show -json` shapes), K8s
-      workloads/ingress, Mermaid out
-- [x] Service→datastore edges from env-var heuristics (DSN parsing)
-- [x] C4 levels: `--level context|container|component`
-- [x] More TF providers (GCP/Azure mappings), module grouping
-- [x] PlantUML/D2 output
-
 ## Development
 
 `make dev` then `make test` / `make lint`. Run `make setup` once to install the
