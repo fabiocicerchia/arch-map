@@ -51,6 +51,19 @@ TF_KINDS = {
     "azurerm_application_gateway": ("edge", "App Gateway"),
     "azurerm_lb": ("edge", "LB"),
     "azurerm_function_app": ("service", "Function App"),
+    # Hetzner Cloud
+    "hcloud_server": ("service", "Hetzner Server"),
+    "hcloud_load_balancer": ("edge", "Hetzner LB"),
+    "hcloud_volume": ("store", "Hetzner Volume"),
+    # Scaleway
+    "scaleway_instance_server": ("service", "Scaleway Instance"),
+    "scaleway_container": ("service", "Scaleway Container"),
+    "scaleway_function": ("service", "Scaleway Function"),
+    "scaleway_rdb_instance": ("database", "Scaleway DB"),
+    "scaleway_redis_cluster": ("cache", "Scaleway Redis"),
+    "scaleway_object_bucket": ("store", "Scaleway Bucket"),
+    "scaleway_lb": ("edge", "Scaleway LB"),
+    "scaleway_mnq_sqs_queue": ("queue", "Scaleway Queue"),
 }
 
 
