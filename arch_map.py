@@ -160,6 +160,31 @@ def nodes_from_tfstate(state):
     return nodes
 
 
+def edges_from_tfstate(state, known_ids):
+    """Resource dependency edges recorded in tfstate, filtered to already-discovered nodes."""
+    edges = []
+    resources = state.get("resources", [])
+    if not resources and "values" in state:
+        root = state["values"].get("root_module", {})
+        for r, _module in _walk_show_json_modules(root):
+            src = r.get("address")
+            if src not in known_ids:
+                continue
+            for dst in r.get("depends_on") or []:
+                if dst in known_ids:
+                    edges.append((src, dst, ""))
+        return edges
+    for r in resources:
+        src = f"{r['type']}.{r['name']}"
+        if src not in known_ids:
+            continue
+        for inst in r.get("instances", []):
+            for dst in inst.get("dependencies") or []:
+                if dst in known_ids:
+                    edges.append((src, dst, ""))
+    return edges
+
+
 def nodes_edges_from_k8s(namespace):
     """Workloads + services + ingress from a live cluster."""
 
@@ -393,7 +418,10 @@ def main(argv=None):
     nodes, edges = [], []
     if args.tfstate:
         with open(args.tfstate) as fh:
-            nodes.extend(nodes_from_tfstate(json.load(fh)))
+            tf_state = json.load(fh)
+        tf_nodes = nodes_from_tfstate(tf_state)
+        nodes.extend(tf_nodes)
+        edges.extend(edges_from_tfstate(tf_state, {n["id"] for n in tf_nodes}))
     if args.k8s:
         knodes, kedges, env_by_workload = nodes_edges_from_k8s(args.k8s)
         nodes.extend(knodes)
