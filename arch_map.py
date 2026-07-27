@@ -242,7 +242,7 @@ SHAPES = {  # mermaid node shapes per kind
 
 
 def sanitize(node_id):
-    return node_id.replace(".", "_").replace("-", "_").replace("/", "_")
+    return re.sub(r"[^A-Za-z0-9_]", "_", node_id)
 
 
 def collapse_to_context(nodes, edges):
