@@ -84,6 +84,33 @@ TF_KINDS = {
     "ovh_dedicated_server": ("service", "OVH Server"),
     "ovh_vps": ("service", "OVH VPS"),
     "ovh_cloud_project_database": ("database", "OVH DB"),
+    # DigitalOcean
+    "digitalocean_droplet": ("service", "Droplet"),
+    "digitalocean_app": ("service", "DO App"),
+    "digitalocean_database_cluster": ("database", "DO Database"),
+    "digitalocean_loadbalancer": ("edge", "DO LB"),
+    "digitalocean_spaces_bucket": ("store", "Spaces"),
+    # Linode / Akamai
+    "linode_instance": ("service", "Linode"),
+    "linode_database_mysql": ("database", "Linode DB"),
+    "linode_database_postgresql": ("database", "Linode DB"),
+    "linode_nodebalancer": ("edge", "NodeBalancer"),
+    "linode_object_storage_bucket": ("store", "Linode Object Storage"),
+    # Cloudflare
+    "cloudflare_workers_script": ("service", "Workers"),
+    "cloudflare_r2_bucket": ("store", "R2"),
+    "cloudflare_load_balancer": ("edge", "CF LB"),
+    "cloudflare_queue": ("queue", "CF Queue"),
+    # Vultr
+    "vultr_instance": ("service", "Vultr Instance"),
+    "vultr_database": ("database", "Vultr DB"),
+    "vultr_load_balancer": ("edge", "Vultr LB"),
+    "vultr_object_storage": ("store", "Vultr Object Storage"),
+    # IBM Cloud
+    "ibm_is_instance": ("service", "IBM VSI"),
+    "ibm_database": ("database", "IBM Cloud Databases"),
+    "ibm_is_lb": ("edge", "IBM LB"),
+    "ibm_cos_bucket": ("store", "COS"),
 }
 
 
