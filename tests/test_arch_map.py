@@ -132,6 +132,22 @@ def test_edges_from_env_dsns_no_match():
     assert edges_from_env_dsns(nodes, env_by_workload) == []
 
 
+def test_edges_from_env_dsns_matches_non_dsn_by_token():
+    nodes = [
+        {"id": "k8s.api", "kind": "service", "label": "api ×3"},
+        {"id": "scaleway_object_bucket.uploads", "kind": "store", "label": "Scaleway Bucket: uploads"},
+    ]
+    env_by_workload = {"k8s.api": ["BUCKET_NAME=my-app-uploads"]}
+    edges = edges_from_env_dsns(nodes, env_by_workload)
+    assert edges == [("k8s.api", "scaleway_object_bucket.uploads", "")]
+
+
+def test_edges_from_env_dsns_token_match_requires_word_boundary():
+    nodes = [{"id": "scaleway_object_bucket.data", "kind": "store", "label": "Scaleway Bucket: data"}]
+    env_by_workload = {"k8s.api": ["METADATABASE_URL=irrelevant"]}
+    assert edges_from_env_dsns(nodes, env_by_workload) == []
+
+
 def test_plantuml_output_shapes_and_edges():
     nodes = [
         {"id": "k8s.api", "kind": "service", "label": "api ×3"},
@@ -158,6 +174,26 @@ def test_d2_output_shapes_and_edges():
     assert 'k8s_api: "api ×3" {shape: rectangle}' in out
     assert 'aws_db_instance_main: "RDS: main" {shape: cylinder}' in out
     assert 'k8s_api -> aws_db_instance_main: "sql"' in out
+
+
+def test_mermaid_output_includes_legend_for_present_kinds_only():
+    nodes = [{"id": "k8s.api", "kind": "service", "label": "api ×3"}]
+    out = to_mermaid(nodes, [])
+    assert "subgraph Legend" in out
+    assert 'legend_service["Service / compute"]' in out
+    assert "legend_database" not in out
+
+
+def test_plantuml_output_includes_legend():
+    nodes = [{"id": "aws_db_instance.main", "kind": "database", "label": "RDS: main"}]
+    out = to_plantuml(nodes, [])
+    assert "legend\n  database = Database\nendlegend" in out
+
+
+def test_d2_output_includes_legend():
+    nodes = [{"id": "aws_db_instance.main", "kind": "database", "label": "RDS: main"}]
+    out = to_d2(nodes, [])
+    assert 'database: "Database" {shape: cylinder}' in out
 
 
 def test_collapse_to_context_groups_by_kind():

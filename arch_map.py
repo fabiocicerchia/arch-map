@@ -237,21 +237,49 @@ DSN_RE = re.compile(
 
 DATASTORE_KINDS = {"database", "cache", "store", "queue"}
 
+# ponytail: naive token match, no real reference tracking — a resource whose
+# terraform name is a short/generic word (e.g. "data") can false-positive.
+# Upgrade path: match against actual bucket/queue names from tfstate `values`
+# instead of the terraform resource name, if this gets noisy in practice.
+MIN_TOKEN_LEN = 4
+
 
 def edges_from_env_dsns(nodes, env_by_workload):
-    """Heuristic service->datastore edges: DSN env vars matched against node ids by name."""
+    """Heuristic service->datastore edges from env var values.
+
+    Two passes, most confident first:
+      1. DSN-style values (scheme://host) matched by hostname.
+      2. Any other env value containing a datastore's resource name as a
+         distinct token — covers bucket names, queue URLs, function names,
+         etc. that aren't connection strings.
+    """
     edges = []
     datastores = [n for n in nodes if n["kind"] in DATASTORE_KINDS]
     for wid, values in env_by_workload.items():
+        matched = set()
         for value in values:
             m = DSN_RE.search(value)
-            if not m:
+            if m:
+                host = m.group("host").lower()
+                for n in datastores:
+                    if n["id"] in matched:
+                        continue
+                    name_part = n["id"].rsplit(".", 1)[-1].lower()
+                    if name_part and name_part in host:
+                        edges.append((wid, n["id"], m.group("scheme").lower()))
+                        matched.add(n["id"])
+                        break
                 continue
-            host = m.group("host").lower()
+            norm_value = value.lower().replace("-", "_")
             for n in datastores:
+                if n["id"] in matched:
+                    continue
                 name_part = n["id"].rsplit(".", 1)[-1].lower()
-                if name_part and name_part in host:
-                    edges.append((wid, n["id"], m.group("scheme").lower()))
+                if len(name_part) < MIN_TOKEN_LEN:
+                    continue
+                if re.search(rf"(?<![a-z0-9]){re.escape(name_part)}(?![a-z0-9])", norm_value):
+                    edges.append((wid, n["id"], ""))
+                    matched.add(n["id"])
                     break
     return edges
 
@@ -264,6 +292,19 @@ SHAPES = {  # mermaid node shapes per kind
     "queue": ("{{", "}}"),
     "edge": ("([", "])"),
 }
+
+KIND_DESCRIPTIONS = {  # shown in the generated legend
+    "service": "Service / compute",
+    "database": "Database",
+    "cache": "Cache",
+    "store": "Object storage",
+    "queue": "Queue / topic",
+    "edge": "Load balancer / ingress",
+}
+
+
+def _present_kinds(nodes):
+    return sorted({n["kind"] for n in nodes})
 
 
 def sanitize(node_id):
@@ -322,6 +363,13 @@ def to_mermaid(nodes, edges, title="Architecture"):
     for src, dst, label in edges:
         arrow = f"-->|{label}|" if label else "-->"
         lines.append(f"  {sanitize(src)} {arrow} {sanitize(dst)}")
+    kinds = _present_kinds(nodes)
+    if kinds:
+        lines.append("  subgraph Legend")
+        for kind in kinds:
+            left, right = SHAPES.get(kind, ("[", "]"))
+            lines.append(f'    legend_{kind}{left}"{KIND_DESCRIPTIONS.get(kind, kind)}"{right}')
+        lines.append("  end")
     lines.append("```")
     return "\n".join(lines)
 
@@ -350,6 +398,13 @@ def to_plantuml(nodes, edges, title="Architecture"):
     for src, dst, label in edges:
         arrow = f"{sanitize(src)} --> {sanitize(dst)}"
         lines.append(f"{arrow} : {label}" if label else arrow)
+    kinds = _present_kinds(nodes)
+    if kinds:
+        lines.append("legend")
+        for kind in kinds:
+            shape = PLANTUML_SHAPES.get(kind, "component")
+            lines.append(f"  {shape} = {KIND_DESCRIPTIONS.get(kind, kind)}")
+        lines.append("endlegend")
     lines.append("@enduml")
     lines.append("```")
     return "\n".join(lines)
@@ -379,6 +434,13 @@ def to_d2(nodes, edges, title="Architecture"):
     for src, dst, label in edges:
         arrow = f"{sanitize(src)} -> {sanitize(dst)}"
         lines.append(f'{arrow}: "{label}"' if label else arrow)
+    kinds = _present_kinds(nodes)
+    if kinds:
+        lines.append("legend: {")
+        for kind in kinds:
+            shape = D2_SHAPES.get(kind, "rectangle")
+            lines.append(f'  {kind}: "{KIND_DESCRIPTIONS.get(kind, kind)}" {{shape: {shape}}}')
+        lines.append("}")
     lines.append("```")
     return "\n".join(lines)
 
