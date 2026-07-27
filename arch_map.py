@@ -64,6 +64,26 @@ TF_KINDS = {
     "scaleway_object_bucket": ("store", "Scaleway Bucket"),
     "scaleway_lb": ("edge", "Scaleway LB"),
     "scaleway_mnq_sqs_queue": ("queue", "Scaleway Queue"),
+    # Alibaba Cloud
+    "alicloud_instance": ("service", "ECS"),
+    "alicloud_fc_function": ("service", "Function Compute"),
+    "alicloud_db_instance": ("database", "ApsaraDB RDS"),
+    "alicloud_kvstore_instance": ("cache", "ApsaraDB Redis"),
+    "alicloud_oss_bucket": ("store", "OSS"),
+    "alicloud_mns_queue": ("queue", "MNS"),
+    "alicloud_slb_load_balancer": ("edge", "SLB"),
+    # Oracle Cloud Infrastructure
+    "oci_core_instance": ("service", "OCI Instance"),
+    "oci_functions_function": ("service", "OCI Function"),
+    "oci_database_db_system": ("database", "OCI DB System"),
+    "oci_database_autonomous_database": ("database", "Autonomous DB"),
+    "oci_objectstorage_bucket": ("store", "OCI Object Storage"),
+    "oci_queue_queue": ("queue", "OCI Queue"),
+    "oci_load_balancer_load_balancer": ("edge", "OCI LB"),
+    # OVH
+    "ovh_dedicated_server": ("service", "OVH Server"),
+    "ovh_vps": ("service", "OVH VPS"),
+    "ovh_cloud_project_database": ("database", "OVH DB"),
 }
 
 
