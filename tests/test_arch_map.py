@@ -51,7 +51,11 @@ def test_tfstate_show_json_format_module_grouping():
         "values": {
             "root_module": {
                 "resources": [
-                    {"address": "aws_sqs_queue.jobs", "type": "aws_sqs_queue", "name": "jobs"},
+                    {
+                        "address": "aws_sqs_queue.jobs",
+                        "type": "aws_sqs_queue",
+                        "name": "jobs",
+                    },
                 ],
                 "child_modules": [
                     {
@@ -78,7 +82,11 @@ def test_tfstate_show_json_format():
         "values": {
             "root_module": {
                 "resources": [
-                    {"address": "aws_s3_bucket.assets", "type": "aws_s3_bucket", "name": "assets"},
+                    {
+                        "address": "aws_s3_bucket.assets",
+                        "type": "aws_s3_bucket",
+                        "name": "assets",
+                    },
                 ]
             }
         }
@@ -105,8 +113,18 @@ def test_sanitize_makes_valid_mermaid_ids():
 
 def test_mermaid_output_groups_by_module():
     nodes = [
-        {"id": "aws_db_instance.main", "kind": "database", "label": "RDS: main", "module": "db"},
-        {"id": "aws_sqs_queue.jobs", "kind": "queue", "label": "SQS: jobs", "module": ""},
+        {
+            "id": "aws_db_instance.main",
+            "kind": "database",
+            "label": "RDS: main",
+            "module": "db",
+        },
+        {
+            "id": "aws_sqs_queue.jobs",
+            "kind": "queue",
+            "label": "SQS: jobs",
+            "module": "",
+        },
     ]
     out = to_mermaid(nodes, [])
     assert 'subgraph db ["module: db"]' in out
@@ -120,7 +138,9 @@ def test_edges_from_env_dsns_matches_datastore_by_name():
         {"id": "aws_db_instance.main", "kind": "database", "label": "RDS: main"},
     ]
     env_by_workload = {
-        "k8s.api": ["postgres://user:pw@main.abc123.us-east-1.rds.amazonaws.com:5432/prod"]
+        "k8s.api": [
+            "postgres://user:pw@main.abc123.us-east-1.rds.amazonaws.com:5432/prod"
+        ]
     }
     edges = edges_from_env_dsns(nodes, env_by_workload)
     assert edges == [("k8s.api", "aws_db_instance.main", "postgres")]
@@ -135,7 +155,11 @@ def test_edges_from_env_dsns_no_match():
 def test_edges_from_env_dsns_matches_non_dsn_by_token():
     nodes = [
         {"id": "k8s.api", "kind": "service", "label": "api ×3"},
-        {"id": "scaleway_object_bucket.uploads", "kind": "store", "label": "Scaleway Bucket: uploads"},
+        {
+            "id": "scaleway_object_bucket.uploads",
+            "kind": "store",
+            "label": "Scaleway Bucket: uploads",
+        },
     ]
     env_by_workload = {"k8s.api": ["BUCKET_NAME=my-app-uploads"]}
     edges = edges_from_env_dsns(nodes, env_by_workload)
@@ -143,7 +167,13 @@ def test_edges_from_env_dsns_matches_non_dsn_by_token():
 
 
 def test_edges_from_env_dsns_token_match_requires_word_boundary():
-    nodes = [{"id": "scaleway_object_bucket.data", "kind": "store", "label": "Scaleway Bucket: data"}]
+    nodes = [
+        {
+            "id": "scaleway_object_bucket.data",
+            "kind": "store",
+            "label": "Scaleway Bucket: data",
+        }
+    ]
     env_by_workload = {"k8s.api": ["METADATABASE_URL=irrelevant"]}
     assert edges_from_env_dsns(nodes, env_by_workload) == []
 
