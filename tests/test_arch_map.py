@@ -138,9 +138,7 @@ def test_edges_from_env_dsns_matches_datastore_by_name():
         {"id": "aws_db_instance.main", "kind": "database", "label": "RDS: main"},
     ]
     env_by_workload = {
-        "k8s.api": [
-            "postgres://user:pw@main.abc123.us-east-1.rds.amazonaws.com:5432/prod"
-        ]
+        "k8s.api": ["postgres://user:pw@main.abc123.us-east-1.rds.amazonaws.com:5432/prod"]
     }
     edges = edges_from_env_dsns(nodes, env_by_workload)
     assert edges == [("k8s.api", "aws_db_instance.main", "postgres")]
