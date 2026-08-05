@@ -16,11 +16,11 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
 
       # Lint the GitHub Actions workflows themselves.
       - name: actionlint
-        uses: raven-actions/actionlint@3d39aea434753780c3b3d4a1a31c854b4dbf49d7  # v2
+        uses: raven-actions/actionlint@3d39aea434753780c3b3d4a1a31c854b4dbf49d7  # v2.2.0
 
       # Enforce .editorconfig (indentation, EOL, trailing whitespace).
       - name: editorconfig-checker
@@ -32,7 +32,7 @@ jobs:
 
       # pre-commit runs the language-specific hooks defined in
       # .pre-commit-config.yaml. It no-ops gracefully if none apply.
-      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
         with:
           python-version: "3.x"
       - name: pre-commit
