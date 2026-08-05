@@ -53,6 +53,22 @@ adds a queue" is visible in the diagram diff.
 git hooks and pre-commit. Full docs live in [`docs/`](docs/); runnable examples
 in [`examples/`](examples/).
 
+## Usage
+
+```sh
+# From Terraform state + a live namespace:
+arch-map --tfstate <(terraform show -json) --k8s production -o ARCHITECTURE.md
+
+# Terraform only:
+arch-map --tfstate infra.tfstate -o ARCHITECTURE.md
+```
+
+More in [`docs/getting-started.md`](docs/getting-started.md).
+
+## Documentation
+
+Full docs live in [`docs/`](docs/). Runnable examples live in [`examples/`](examples/).
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). By participating you agree to the
