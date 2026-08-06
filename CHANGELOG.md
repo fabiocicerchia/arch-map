@@ -4,6 +4,14 @@ All notable changes to this project are documented here. The format is based
 on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1](https://github.com/fabiocicerchia/arch-map/compare/v0.1.0...v0.1.1) (2026-08-06)
+
+
+### Bug Fixes
+
+* **pre-commit:** stop check-yaml failing on Helm templates and multi-doc manifests ([09fb6c0](https://github.com/fabiocicerchia/arch-map/commit/09fb6c08f00c5238fbdb27f66a14fae0758f0740))
+* **security:** skip the SARIF upload on private repos ([6c6b7d5](https://github.com/fabiocicerchia/arch-map/commit/6c6b7d551dddafcd54a1299ee466b421925c64da))
+
 ## [Unreleased]
 
 ## [0.1.0]
