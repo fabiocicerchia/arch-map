@@ -4,6 +4,7 @@
 [![Security](https://github.com/fabiocicerchia/arch-map/actions/workflows/security.yml/badge.svg)](https://github.com/fabiocicerchia/arch-map/actions/workflows/security.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/fabiocicerchia/arch-map/badge)](https://securityscorecards.dev/viewer/?uri=github.com/fabiocicerchia/arch-map)
+[![CI carbon](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/fabiocicerchia/arch-map/gh-pages/badge.json)](.github/workflows/carbon-badge.yml)
 [![Release](https://img.shields.io/github/v/release/fabiocicerchia/arch-map)](https://github.com/fabiocicerchia/arch-map/releases)
 
 A **living C4-style container diagram generated from your real
