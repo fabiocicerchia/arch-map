@@ -190,22 +190,23 @@ def edges_from_tfstate(state, known_ids):
     return edges
 
 
+def _kubectl_get(resource_kind, namespace):
+    """The `items` of one resource kind in a namespace, read via local kubectl."""
+    # nosec B603 B607: fixed argv (no shell); resource_kind is an internal literal
+    # and namespace is passed as a single argv element, so neither can inject.
+    out = subprocess.run(  # nosec B603 B607
+        ["kubectl", "get", resource_kind, "-n", namespace, "-o", "json"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    return json.loads(out)["items"]
+
+
 def nodes_edges_from_k8s(namespace):
     """Workloads + services + ingress from a live cluster."""
-
-    def get(kind):
-        # nosec B603 B607: fixed argv (no shell); kind is an internal literal and
-        # namespace is passed as a single argv element, so neither can inject.
-        out = subprocess.run(  # nosec B603 B607
-            ["kubectl", "get", kind, "-n", namespace, "-o", "json"],
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout
-        return json.loads(out)["items"]
-
     nodes, edges, env_by_workload = [], [], {}
-    for deployment in get("deployments"):
+    for deployment in _kubectl_get("deployments", namespace):
         name = deployment["metadata"]["name"]
         replicas = deployment["spec"].get("replicas", 1)
         workload_id = f"k8s.{name}"
@@ -219,11 +220,11 @@ def nodes_edges_from_k8s(namespace):
         if env_values:
             env_by_workload[workload_id] = env_values
     selectors = {}
-    for service in get("services"):
+    for service in _kubectl_get("services", namespace):
         selector = service["spec"].get("selector") or {}
         app = selector.get("app") or selector.get("app.kubernetes.io/name")
         selectors[service["metadata"]["name"]] = app
-    for ingress in get("ingresses"):
+    for ingress in _kubectl_get("ingresses", namespace):
         name = ingress["metadata"]["name"]
         ingress_id = f"k8s.ing.{name}"
         nodes.append({"id": ingress_id, "kind": "edge", "label": f"Ingress: {name}"})
