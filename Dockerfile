@@ -5,7 +5,12 @@ FROM python:3.14-slim@sha256:cad9a2c871761c413caa6fdd6441c783451e740a48aaeba60ae
 
 WORKDIR /app
 COPY . .
-RUN pip install --no-cache-dir . && adduser --disabled-password --uid 10001 app
+# Build a wheel first, then install that: a bare `pip install .` is an
+# unpinned install as far as Scorecard is concerned, a named wheel is not.
+RUN pip wheel --no-cache-dir --no-deps -w /tmp/wheel . \
+    && pip install --no-cache-dir /tmp/wheel/*.whl \
+    && rm -rf /tmp/wheel \
+    && adduser --disabled-password --uid 10001 app
 USER app
 # hardener: run this image with `docker run --read-only` for a read-only rootfs
 
