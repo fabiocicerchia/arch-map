@@ -35,5 +35,10 @@ arch-map = "arch_map:main"
 [tool.setuptools]
 py-modules = ["arch_map"]
 
+[tool.pytest.ini_options]
+# Without this pytest imports an installed arch_map from site-packages instead
+# of the one in the checkout, so the suite grades a copy that is not in the tree.
+pythonpath = ["."]
+
 [tool.ruff]
 line-length = 100

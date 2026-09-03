@@ -1,7 +1,8 @@
 # Architecture
 
 arch-map is a single-file, stdlib-only CLI. It reads two kinds of source,
-normalizes them into a flat list of typed nodes and edges, and renders Mermaid.
+normalizes them into a flat list of typed nodes and edges, and renders Mermaid
+(default), PlantUML or D2.
 
 ## Overview
 
@@ -13,13 +14,21 @@ kubectl (K8s) ───┘
 
 ## Components
 
-- **Terraform reader** — parses both classic state and `terraform show -json`
-  shapes. `TF_KINDS` maps resource types (e.g. `aws_db_instance`) to a node
-  kind + label prefix.
-- **Kubernetes reader** — shells out to `kubectl` for workloads, services and
-  ingresses in a namespace; captures replica counts and ingress hostnames.
-- **Renderer** — groups nodes by kind and emits a Mermaid `flowchart`, wiring
-  ingress→service edges from label selectors.
+- **Terraform reader** — one reader per state shape: `_nodes_from_show_json` /
+  `_edges_from_show_json` for `terraform show -json`, `_nodes_from_classic_state`
+  / `_edges_from_classic_state` for a classic flat state file. `nodes_from_tfstate`
+  and `edges_from_tfstate` pick between them. `TF_KINDS` maps resource types
+  (e.g. `aws_db_instance`) to a node kind + label prefix.
+- **Kubernetes reader** — one reader per resource kind (`_k8s_workloads`,
+  `_k8s_selectors`, `_k8s_ingresses`), each shelling out through `_kubectl_get`;
+  captures replica counts, container env values and ingress hostnames.
+- **Env-var heuristic** — `edges_from_env_dsns` guesses service→datastore edges
+  from a workload's env values in two named passes: `_datastore_in_host` for
+  DSN-style values, then `_datastore_in_value` for whole-token name matches.
+- **Renderers** — `to_mermaid` (default), `to_plantuml` and `to_d2`, selected
+  through `RENDERERS`. All three group nodes with the shared `_by_kind` so the
+  formats cannot drift into different orderings; only Mermaid draws Terraform
+  module subgraphs. Ingress→service edges are wired from label selectors.
 
 ## Data flow
 

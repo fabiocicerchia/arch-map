@@ -18,6 +18,8 @@ import subprocess
 import sys
 from collections import Counter, defaultdict
 
+DEFAULT_TITLE = "Architecture"
+
 # Terraform resource type -> (node kind, label prefix)
 TF_KINDS = {
     "aws_db_instance": ("database", "RDS"),
@@ -117,8 +119,8 @@ TF_KINDS = {
 
 def _walk_show_json_modules(module, path=""):
     """Yield (resource, module_path) for a `terraform show -json` module tree."""
-    for r in module.get("resources", []):
-        yield r, path
+    for resource in module.get("resources", []):
+        yield resource, path
     for child in module.get("child_modules", []):
         # child module address looks like "module.db" or "module.db.module.sub"
         name = child["address"].rsplit(".", 1)[-1] if "address" in child else "?"
@@ -126,107 +128,153 @@ def _walk_show_json_modules(module, path=""):
         yield from _walk_show_json_modules(child, child_path)
 
 
-def nodes_from_tfstate(state):
-    """Extract interesting nodes from a terraform state dict."""
+def _nodes_from_show_json(root):
+    """Nodes from a `terraform show -json` module tree, keeping the module path."""
     nodes = []
-    resources = state.get("resources", [])
-    # `terraform show -json` nests under values.root_module
-    if not resources and "values" in state:
-        root = state["values"].get("root_module", {})
-        for r, module in _walk_show_json_modules(root):
-            kind = TF_KINDS.get(r.get("type"))
-            if kind:
-                nodes.append(
-                    {
-                        "id": r["address"],
-                        "kind": kind[0],
-                        "label": f"{kind[1]}: {r.get('name', r['address'])}",
-                        "module": module,
-                    }
-                )
-        return nodes
-    for r in resources:
-        kind = TF_KINDS.get(r.get("type"))
-        if kind:
-            # classic state: "module" is e.g. "module.db" or "module.db.module.sub"
-            module = "/".join(r["module"].split(".")[1::2]) if r.get("module") else ""
+    for resource, module in _walk_show_json_modules(root):
+        mapped = TF_KINDS.get(resource.get("type"))
+        if mapped:
+            node_kind, label_prefix = mapped
+            name = resource.get("name", resource["address"])
             nodes.append(
                 {
-                    "id": f"{r['type']}.{r['name']}",
-                    "kind": kind[0],
-                    "label": f"{kind[1]}: {r['name']}",
+                    "id": resource["address"],
+                    "kind": node_kind,
+                    "label": f"{label_prefix}: {name}",
                     "module": module,
                 }
             )
     return nodes
 
 
-def edges_from_tfstate(state, known_ids):
-    """Resource dependency edges recorded in tfstate, filtered to already-discovered nodes."""
-    edges = []
+def _nodes_from_classic_state(resources):
+    """Nodes from a classic flat state file."""
+    nodes = []
+    for resource in resources:
+        mapped = TF_KINDS.get(resource.get("type"))
+        if mapped:
+            node_kind, label_prefix = mapped
+            # classic state: "module" is e.g. "module.db" or "module.db.module.sub"
+            module = "/".join(resource["module"].split(".")[1::2]) if resource.get("module") else ""
+            nodes.append(
+                {
+                    "id": f"{resource['type']}.{resource['name']}",
+                    "kind": node_kind,
+                    "label": f"{label_prefix}: {resource['name']}",
+                    "module": module,
+                }
+            )
+    return nodes
+
+
+def nodes_from_tfstate(state):
+    """Extract interesting nodes from a terraform state dict."""
     resources = state.get("resources", [])
+    # `terraform show -json` nests under values.root_module
     if not resources and "values" in state:
-        root = state["values"].get("root_module", {})
-        for r, _module in _walk_show_json_modules(root):
-            src = r.get("address")
-            if src not in known_ids:
-                continue
-            for dst in r.get("depends_on") or []:
-                if dst in known_ids:
-                    edges.append((src, dst, ""))
-        return edges
-    for r in resources:
-        src = f"{r['type']}.{r['name']}"
+        return _nodes_from_show_json(state["values"].get("root_module", {}))
+    return _nodes_from_classic_state(resources)
+
+
+def _edges_from_show_json(root, known_ids):
+    """`depends_on` edges from a `terraform show -json` module tree."""
+    edges = []
+    for resource, _module in _walk_show_json_modules(root):
+        src = resource.get("address")
         if src not in known_ids:
             continue
-        for inst in r.get("instances", []):
-            for dst in inst.get("dependencies") or []:
+        for dst in resource.get("depends_on") or []:
+            if dst in known_ids:
+                edges.append((src, dst, ""))
+    return edges
+
+
+def _edges_from_classic_state(resources, known_ids):
+    """Per-instance `dependencies` edges from a classic flat state file."""
+    edges = []
+    for resource in resources:
+        src = f"{resource['type']}.{resource['name']}"
+        if src not in known_ids:
+            continue
+        for instance in resource.get("instances", []):
+            for dst in instance.get("dependencies") or []:
                 if dst in known_ids:
                     edges.append((src, dst, ""))
     return edges
 
 
+def edges_from_tfstate(state, known_ids):
+    """Resource dependency edges recorded in tfstate, filtered to already-discovered nodes."""
+    resources = state.get("resources", [])
+    if not resources and "values" in state:
+        return _edges_from_show_json(state["values"].get("root_module", {}), known_ids)
+    return _edges_from_classic_state(resources, known_ids)
+
+
+def _kubectl_get(resource_kind, namespace):
+    """The `items` of one resource kind in a namespace, read via local kubectl."""
+    # nosec B603 B607: fixed argv (no shell); resource_kind is an internal literal
+    # and namespace is passed as a single argv element, so neither can inject.
+    out = subprocess.run(  # nosec B603 B607
+        ["kubectl", "get", resource_kind, "-n", namespace, "-o", "json"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    return json.loads(out)["items"]
+
+
+def _k8s_workloads(namespace):
+    """Deployment nodes, and the literal env values each workload's containers carry."""
+    nodes, env_by_workload = [], {}
+    for deployment in _kubectl_get("deployments", namespace):
+        name = deployment["metadata"]["name"]
+        replicas = deployment["spec"].get("replicas", 1)
+        workload_id = f"k8s.{name}"
+        nodes.append({"id": workload_id, "kind": "service", "label": f"{name} ×{replicas}"})
+        env_values = []
+        for container in deployment["spec"]["template"]["spec"].get("containers", []):
+            for env_var in container.get("env", []):
+                # env entries without "value" are valueFrom refs: nothing to read here
+                if "value" in env_var:
+                    env_values.append(env_var["value"])
+        if env_values:
+            env_by_workload[workload_id] = env_values
+    return nodes, env_by_workload
+
+
+def _k8s_selectors(namespace):
+    """Service name -> the app label its selector targets, or None when it has none."""
+    selectors = {}
+    for service in _kubectl_get("services", namespace):
+        selector = service["spec"].get("selector") or {}
+        app = selector.get("app") or selector.get("app.kubernetes.io/name")
+        selectors[service["metadata"]["name"]] = app
+    return selectors
+
+
+def _k8s_ingresses(namespace, selectors):
+    """Ingress nodes and their ingress->workload edges, wired through the selectors."""
+    nodes, edges = [], []
+    for ingress in _kubectl_get("ingresses", namespace):
+        name = ingress["metadata"]["name"]
+        ingress_id = f"k8s.ing.{name}"
+        nodes.append({"id": ingress_id, "kind": "edge", "label": f"Ingress: {name}"})
+        for rule in ingress["spec"].get("rules", []):
+            for path in rule.get("http", {}).get("paths", []):
+                service_name = path.get("backend", {}).get("service", {}).get("name")
+                app = selectors.get(service_name)
+                if app:
+                    edges.append((ingress_id, f"k8s.{app}", rule.get("host", "")))
+    return nodes, edges
+
+
 def nodes_edges_from_k8s(namespace):
     """Workloads + services + ingress from a live cluster."""
-
-    def get(kind):
-        # nosec B603 B607: fixed argv (no shell); kind is an internal literal and
-        # namespace is passed as a single argv element, so neither can inject.
-        out = subprocess.run(  # nosec B603 B607
-            ["kubectl", "get", kind, "-n", namespace, "-o", "json"],
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout
-        return json.loads(out)["items"]
-
-    nodes, edges, env_by_workload = [], [], {}
-    for d in get("deployments"):
-        name = d["metadata"]["name"]
-        replicas = d["spec"].get("replicas", 1)
-        wid = f"k8s.{name}"
-        nodes.append({"id": wid, "kind": "service", "label": f"{name} ×{replicas}"})
-        values = []
-        for c in d["spec"]["template"]["spec"].get("containers", []):
-            for e in c.get("env", []):
-                if "value" in e:
-                    values.append(e["value"])
-        if values:
-            env_by_workload[wid] = values
-    selectors = {}
-    for s in get("services"):
-        sel = s["spec"].get("selector") or {}
-        selectors[s["metadata"]["name"]] = sel.get("app") or sel.get("app.kubernetes.io/name")
-    for i in get("ingresses"):
-        ing_name = i["metadata"]["name"]
-        nodes.append({"id": f"k8s.ing.{ing_name}", "kind": "edge", "label": f"Ingress: {ing_name}"})
-        for rule in i["spec"].get("rules", []):
-            for path in rule.get("http", {}).get("paths", []):
-                svc = path.get("backend", {}).get("service", {}).get("name")
-                app = selectors.get(svc)
-                if app:
-                    edges.append((f"k8s.ing.{ing_name}", f"k8s.{app}", rule.get("host", "")))
-    return nodes, edges, env_by_workload
+    workload_nodes, env_by_workload = _k8s_workloads(namespace)
+    selectors = _k8s_selectors(namespace)
+    ingress_nodes, edges = _k8s_ingresses(namespace, selectors)
+    return workload_nodes + ingress_nodes, edges, env_by_workload
 
 
 # scheme://[user[:pass]@]host[:port][/db] — enough to pull a host out of a DSN env var
@@ -245,6 +293,30 @@ DATASTORE_KINDS = {"database", "cache", "store", "queue"}
 MIN_TOKEN_LEN = 4
 
 
+def _datastore_in_host(host, datastores, matched):
+    """Id of the first unmatched datastore whose terraform name is inside a DSN host."""
+    for node in datastores:
+        if node["id"] in matched:
+            continue
+        resource_name = node["id"].rsplit(".", 1)[-1].lower()
+        if resource_name and resource_name in host:
+            return node["id"]
+    return None
+
+
+def _datastore_in_value(value, datastores, matched):
+    """Id of the first unmatched datastore whose terraform name is a whole token in `value`."""
+    for node in datastores:
+        if node["id"] in matched:
+            continue
+        resource_name = node["id"].rsplit(".", 1)[-1].lower()
+        if len(resource_name) < MIN_TOKEN_LEN:
+            continue
+        if re.search(rf"(?<![a-z0-9]){re.escape(resource_name)}(?![a-z0-9])", value):
+            return node["id"]
+    return None
+
+
 def edges_from_env_dsns(nodes, env_by_workload):
     """Heuristic service->datastore edges from env var values.
 
@@ -255,33 +327,21 @@ def edges_from_env_dsns(nodes, env_by_workload):
          etc. that aren't connection strings.
     """
     edges = []
-    datastores = [n for n in nodes if n["kind"] in DATASTORE_KINDS]
-    for wid, values in env_by_workload.items():
+    datastores = [node for node in nodes if node["kind"] in DATASTORE_KINDS]
+    for workload_id, env_values in env_by_workload.items():
         matched = set()
-        for value in values:
-            m = DSN_RE.search(value)
-            if m:
-                host = m.group("host").lower()
-                for n in datastores:
-                    if n["id"] in matched:
-                        continue
-                    name_part = n["id"].rsplit(".", 1)[-1].lower()
-                    if name_part and name_part in host:
-                        edges.append((wid, n["id"], m.group("scheme").lower()))
-                        matched.add(n["id"])
-                        break
-                continue
-            norm_value = value.lower().replace("-", "_")
-            for n in datastores:
-                if n["id"] in matched:
-                    continue
-                name_part = n["id"].rsplit(".", 1)[-1].lower()
-                if len(name_part) < MIN_TOKEN_LEN:
-                    continue
-                if re.search(rf"(?<![a-z0-9]){re.escape(name_part)}(?![a-z0-9])", norm_value):
-                    edges.append((wid, n["id"], ""))
-                    matched.add(n["id"])
-                    break
+        for value in env_values:
+            dsn = DSN_RE.search(value)
+            if dsn:
+                target = _datastore_in_host(dsn.group("host").lower(), datastores, matched)
+                label = dsn.group("scheme").lower()
+            else:
+                normalised = value.lower().replace("-", "_")
+                target = _datastore_in_value(normalised, datastores, matched)
+                label = ""
+            if target:
+                edges.append((workload_id, target, label))
+                matched.add(target)
     return edges
 
 
@@ -293,6 +353,7 @@ SHAPES = {  # mermaid node shapes per kind
     "queue": ("{{", "}}"),
     "edge": ("([", "])"),
 }
+DEFAULT_SHAPE = ("[", "]")  # unknown kind: a plain mermaid box
 
 KIND_DESCRIPTIONS = {  # shown in the generated legend
     "service": "Service / compute",
@@ -305,7 +366,7 @@ KIND_DESCRIPTIONS = {  # shown in the generated legend
 
 
 def _present_kinds(nodes):
-    return sorted({n["kind"] for n in nodes})
+    return sorted({node["kind"] for node in nodes})
 
 
 def sanitize(node_id):
@@ -314,45 +375,53 @@ def sanitize(node_id):
 
 def collapse_to_context(nodes, edges):
     """C4 context level: one box per kind, edges collapsed to kind->kind."""
-    kind_counts = Counter(n["kind"] for n in nodes)
+    kind_counts = Counter(node["kind"] for node in nodes)
     context_nodes = [
         {"id": f"group_{kind}", "kind": kind, "label": f"{kind} ({count})"}
         for kind, count in sorted(kind_counts.items())
     ]
-    kind_by_id = {n["id"]: n["kind"] for n in nodes}
+    kind_by_id = {node["id"]: node["kind"] for node in nodes}
     seen, context_edges = set(), []
     for src, dst, _label in edges:
-        sk, dk = kind_by_id.get(src), kind_by_id.get(dst)
-        if not sk or not dk or sk == dk or (sk, dk) in seen:
+        src_kind, dst_kind = kind_by_id.get(src), kind_by_id.get(dst)
+        if not src_kind or not dst_kind or src_kind == dst_kind or (src_kind, dst_kind) in seen:
             continue
-        seen.add((sk, dk))
-        context_edges.append((f"group_{sk}", f"group_{dk}", ""))
+        seen.add((src_kind, dst_kind))
+        context_edges.append((f"group_{src_kind}", f"group_{dst_kind}", ""))
     return context_nodes, context_edges
+
+
+def _by_kind(nodes):
+    """Nodes bucketed by kind, in kind order — the grouping every renderer uses.
+
+    Shared so the three formats can never drift into different orderings.
+    """
+    grouped = defaultdict(list)
+    for node in nodes:
+        grouped[node["kind"]].append(node)
+    return sorted(grouped.items())
 
 
 def _kind_subgraph_lines(group, indent):
     lines = []
-    by_kind = defaultdict(list)
-    for n in group:
-        by_kind[n["kind"]].append(n)
-    for kind, kgroup in sorted(by_kind.items()):
+    for kind, kgroup in _by_kind(group):
         lines.append(f"{indent}subgraph {kind}s")
-        for n in kgroup:
-            left, right = SHAPES.get(kind, ("[", "]"))
-            lines.append(f'{indent}  {sanitize(n["id"])}{left}"{n["label"]}"{right}')
+        for node in kgroup:
+            left, right = SHAPES.get(kind, DEFAULT_SHAPE)
+            lines.append(f'{indent}  {sanitize(node["id"])}{left}"{node["label"]}"{right}')
         lines.append(f"{indent}end")
     return lines
 
 
-def to_mermaid(nodes, edges, title="Architecture"):
+def to_mermaid(nodes, edges, title=DEFAULT_TITLE):
     lines = [
         "```mermaid",
         "flowchart TB",
         f"  %% {title} — generated by arch-map, do not edit by hand",
     ]
     by_module = {}
-    for n in nodes:
-        by_module.setdefault(n.get("module", ""), []).append(n)
+    for node in nodes:
+        by_module.setdefault(node.get("module", ""), []).append(node)
     root = by_module.pop("", [])
     for module, group in sorted(by_module.items()):
         lines.append(f'  subgraph {sanitize(module)} ["module: {module}"]')
@@ -366,7 +435,7 @@ def to_mermaid(nodes, edges, title="Architecture"):
     if kinds:
         lines.append("  subgraph Legend")
         for kind in kinds:
-            left, right = SHAPES.get(kind, ("[", "]"))
+            left, right = SHAPES.get(kind, DEFAULT_SHAPE)
             lines.append(f'    legend_{kind}{left}"{KIND_DESCRIPTIONS.get(kind, kind)}"{right}')
         lines.append("  end")
     lines.append("```")
@@ -381,18 +450,16 @@ PLANTUML_SHAPES = {  # kind -> PlantUML component-diagram stereotype
     "queue": "queue",
     "edge": "boundary",
 }
+DEFAULT_PLANTUML_SHAPE = "component"
 
 
-def to_plantuml(nodes, edges, title="Architecture"):
+def to_plantuml(nodes, edges, title=DEFAULT_TITLE):
     lines = ["```plantuml", "@startuml", f"title {title}", "left to right direction"]
-    by_kind = defaultdict(list)
-    for n in nodes:
-        by_kind[n["kind"]].append(n)
-    for kind, group in sorted(by_kind.items()):
+    for kind, group in _by_kind(nodes):
         lines.append(f'package "{kind}s" {{')
-        for n in group:
-            shape = PLANTUML_SHAPES.get(kind, "component")
-            lines.append(f'  {shape} "{n["label"]}" as {sanitize(n["id"])}')
+        for node in group:
+            shape = PLANTUML_SHAPES.get(kind, DEFAULT_PLANTUML_SHAPE)
+            lines.append(f'  {shape} "{node["label"]}" as {sanitize(node["id"])}')
         lines.append("}")
     for src, dst, label in edges:
         arrow = f"{sanitize(src)} --> {sanitize(dst)}"
@@ -401,7 +468,7 @@ def to_plantuml(nodes, edges, title="Architecture"):
     if kinds:
         lines.append("legend")
         for kind in kinds:
-            shape = PLANTUML_SHAPES.get(kind, "component")
+            shape = PLANTUML_SHAPES.get(kind, DEFAULT_PLANTUML_SHAPE)
             lines.append(f"  {shape} = {KIND_DESCRIPTIONS.get(kind, kind)}")
         lines.append("endlegend")
     lines.append("@enduml")
@@ -417,18 +484,16 @@ D2_SHAPES = {  # kind -> D2 shape
     "queue": "queue",
     "edge": "hexagon",
 }
+DEFAULT_D2_SHAPE = "rectangle"
 
 
-def to_d2(nodes, edges, title="Architecture"):
+def to_d2(nodes, edges, title=DEFAULT_TITLE):
     lines = ["```d2", f"# {title} — generated by arch-map, do not edit by hand"]
-    by_kind = defaultdict(list)
-    for n in nodes:
-        by_kind[n["kind"]].append(n)
-    for kind, group in sorted(by_kind.items()):
+    for kind, group in _by_kind(nodes):
         lines.append(f"{kind}s: {{")
-        for n in group:
-            shape = D2_SHAPES.get(kind, "rectangle")
-            lines.append(f'  {sanitize(n["id"])}: "{n["label"]}" {{shape: {shape}}}')
+        for node in group:
+            shape = D2_SHAPES.get(kind, DEFAULT_D2_SHAPE)
+            lines.append(f'  {sanitize(node["id"])}: "{node["label"]}" {{shape: {shape}}}')
         lines.append("}")
     for src, dst, label in edges:
         arrow = f"{sanitize(src)} -> {sanitize(dst)}"
@@ -437,7 +502,7 @@ def to_d2(nodes, edges, title="Architecture"):
     if kinds:
         lines.append("legend: {")
         for kind in kinds:
-            shape = D2_SHAPES.get(kind, "rectangle")
+            shape = D2_SHAPES.get(kind, DEFAULT_D2_SHAPE)
             lines.append(f'  {kind}: "{KIND_DESCRIPTIONS.get(kind, kind)}" {{shape: {shape}}}')
         lines.append("}")
     lines.append("```")
@@ -447,15 +512,16 @@ def to_d2(nodes, edges, title="Architecture"):
 RENDERERS = {"mermaid": to_mermaid, "plantuml": to_plantuml, "d2": to_d2}
 
 
-def main(argv=None):
-    p = argparse.ArgumentParser(
+def _build_parser():
+    """The CLI surface: the two sources, the output target, and the two style choices."""
+    parser = argparse.ArgumentParser(
         prog="arch-map", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    p.add_argument("--tfstate", help="terraform state JSON file")
-    p.add_argument("--k8s", metavar="NAMESPACE", help="live cluster namespace")
-    p.add_argument("-o", "--output", default="-", help="output file (default stdout)")
-    p.add_argument("--title", default="Architecture")
-    p.add_argument(
+    parser.add_argument("--tfstate", help="terraform state JSON file")
+    parser.add_argument("--k8s", metavar="NAMESPACE", help="live cluster namespace")
+    parser.add_argument("-o", "--output", default="-", help="output file (default stdout)")
+    parser.add_argument("--title", default=DEFAULT_TITLE)
+    parser.add_argument(
         "--level",
         choices=["context", "container", "component"],
         default="container",
@@ -465,30 +531,40 @@ def main(argv=None):
             "collect sub-component detail, so component == container"
         ),
     )
-    p.add_argument(
+    parser.add_argument(
         "--format",
         choices=sorted(RENDERERS),
         default="mermaid",
         help="diagram syntax (default: mermaid, renders natively on GitHub)",
     )
-    args = p.parse_args(argv)
+    return parser
 
-    if not args.tfstate and not args.k8s:
-        p.error("need at least one of --tfstate / --k8s")
 
+def _collect(args):
+    """Nodes and edges from every source the flags asked for, in source order."""
     nodes, edges = [], []
     if args.tfstate:
         with open(args.tfstate) as fh:
             tf_state = json.load(fh)
         tf_nodes = nodes_from_tfstate(tf_state)
         nodes.extend(tf_nodes)
-        edges.extend(edges_from_tfstate(tf_state, {n["id"] for n in tf_nodes}))
+        edges.extend(edges_from_tfstate(tf_state, {node["id"] for node in tf_nodes}))
     if args.k8s:
-        knodes, kedges, env_by_workload = nodes_edges_from_k8s(args.k8s)
-        nodes.extend(knodes)
-        edges.extend(kedges)
+        k8s_nodes, k8s_edges, env_by_workload = nodes_edges_from_k8s(args.k8s)
+        nodes.extend(k8s_nodes)
+        edges.extend(k8s_edges)
         edges.extend(edges_from_env_dsns(nodes, env_by_workload))
+    return nodes, edges
 
+
+def main(argv=None):
+    parser = _build_parser()
+    args = parser.parse_args(argv)
+
+    if not args.tfstate and not args.k8s:
+        parser.error("need at least one of --tfstate / --k8s")
+
+    nodes, edges = _collect(args)
     if args.level == "context":
         nodes, edges = collapse_to_context(nodes, edges)
 
