@@ -6,7 +6,7 @@ normalizes them into a flat list of typed nodes and edges, and renders Mermaid
 
 ## Overview
 
-```
+```text
 Terraform state ─┐
                  ├─▶ nodes + edges ─▶ Mermaid flowchart ─▶ ARCHITECTURE.md
 kubectl (K8s) ───┘
@@ -33,8 +33,8 @@ kubectl (K8s) ───┘
 ## Data flow
 
 1. Collect resources from each requested source.
-2. Map each to a node (kind, id, label) and derive edges.
-3. Group by kind and serialize to Mermaid, written to the `-o` target.
+1. Map each to a node (kind, id, label) and derive edges.
+1. Group by kind and serialize to Mermaid, written to the `-o` target.
 
 ## Decisions
 
