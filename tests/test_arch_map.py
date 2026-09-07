@@ -9,7 +9,7 @@ from arch_map import (
 )
 
 
-def test_tfstate_classic_format():
+def test_tfstate_classic_format() -> None:
     state = {
         "resources": [
             {"type": "aws_db_instance", "name": "main"},
@@ -21,7 +21,7 @@ def test_tfstate_classic_format():
     assert {n["kind"] for n in nodes} == {"database", "queue"}
 
 
-def test_tfstate_gcp_and_azure_kinds():
+def test_tfstate_gcp_and_azure_kinds() -> None:
     state = {
         "resources": [
             {"type": "google_sql_database_instance", "name": "primary"},
@@ -34,7 +34,7 @@ def test_tfstate_gcp_and_azure_kinds():
     assert {n["kind"] for n in nodes} == {"database", "queue", "cache", "store"}
 
 
-def test_tfstate_classic_format_module_grouping():
+def test_tfstate_classic_format_module_grouping() -> None:
     state = {
         "resources": [
             {"type": "aws_db_instance", "name": "main", "module": "module.db"},
@@ -46,7 +46,7 @@ def test_tfstate_classic_format_module_grouping():
     assert modules == {"aws_db_instance.main": "db", "aws_sqs_queue.jobs": ""}
 
 
-def test_tfstate_show_json_format_module_grouping():
+def test_tfstate_show_json_format_module_grouping() -> None:
     state = {
         "values": {
             "root_module": {
@@ -77,7 +77,7 @@ def test_tfstate_show_json_format_module_grouping():
     assert modules == {"aws_sqs_queue.jobs": "", "module.db.aws_db_instance.main": "db"}
 
 
-def test_tfstate_show_json_format():
+def test_tfstate_show_json_format() -> None:
     state = {
         "values": {
             "root_module": {
@@ -95,7 +95,7 @@ def test_tfstate_show_json_format():
     assert nodes[0]["label"] == "S3: assets"
 
 
-def test_mermaid_output_shapes_and_edges():
+def test_mermaid_output_shapes_and_edges() -> None:
     nodes = [
         {"id": "k8s.api", "kind": "service", "label": "api ×3"},
         {"id": "aws_db_instance.main", "kind": "database", "label": "RDS: main"},
@@ -107,11 +107,11 @@ def test_mermaid_output_shapes_and_edges():
     assert "k8s_api -->|sql| aws_db_instance_main" in out
 
 
-def test_sanitize_makes_valid_mermaid_ids():
+def test_sanitize_makes_valid_mermaid_ids() -> None:
     assert sanitize("aws_db_instance.my-db") == "aws_db_instance_my_db"
 
 
-def test_mermaid_output_groups_by_module():
+def test_mermaid_output_groups_by_module() -> None:
     nodes = [
         {
             "id": "aws_db_instance.main",
@@ -132,25 +132,23 @@ def test_mermaid_output_groups_by_module():
     assert out.index("subgraph db") < out.index("aws_db_instance_main")
 
 
-def test_edges_from_env_dsns_matches_datastore_by_name():
+def test_edges_from_env_dsns_matches_datastore_by_name() -> None:
     nodes = [
         {"id": "k8s.api", "kind": "service", "label": "api ×3"},
         {"id": "aws_db_instance.main", "kind": "database", "label": "RDS: main"},
     ]
-    env_by_workload = {
-        "k8s.api": ["postgres://user:pw@main.abc123.us-east-1.rds.amazonaws.com:5432/prod"]
-    }
+    env_by_workload = {"k8s.api": ["postgres://user:pw@main.abc123.us-east-1.rds.amazonaws.com:5432/prod"]}
     edges = edges_from_env_dsns(nodes, env_by_workload)
     assert edges == [("k8s.api", "aws_db_instance.main", "postgres")]
 
 
-def test_edges_from_env_dsns_no_match():
+def test_edges_from_env_dsns_no_match() -> None:
     nodes = [{"id": "aws_db_instance.main", "kind": "database", "label": "RDS: main"}]
     env_by_workload = {"k8s.api": ["not a dsn", "SOME_FLAG=true"]}
     assert edges_from_env_dsns(nodes, env_by_workload) == []
 
 
-def test_edges_from_env_dsns_matches_non_dsn_by_token():
+def test_edges_from_env_dsns_matches_non_dsn_by_token() -> None:
     nodes = [
         {"id": "k8s.api", "kind": "service", "label": "api ×3"},
         {
@@ -164,7 +162,7 @@ def test_edges_from_env_dsns_matches_non_dsn_by_token():
     assert edges == [("k8s.api", "scaleway_object_bucket.uploads", "")]
 
 
-def test_edges_from_env_dsns_token_match_requires_word_boundary():
+def test_edges_from_env_dsns_token_match_requires_word_boundary() -> None:
     nodes = [
         {
             "id": "scaleway_object_bucket.data",
@@ -176,7 +174,7 @@ def test_edges_from_env_dsns_token_match_requires_word_boundary():
     assert edges_from_env_dsns(nodes, env_by_workload) == []
 
 
-def test_plantuml_output_shapes_and_edges():
+def test_plantuml_output_shapes_and_edges() -> None:
     nodes = [
         {"id": "k8s.api", "kind": "service", "label": "api ×3"},
         {"id": "aws_db_instance.main", "kind": "database", "label": "RDS: main"},
@@ -190,7 +188,7 @@ def test_plantuml_output_shapes_and_edges():
     assert "k8s_api --> aws_db_instance_main : sql" in out
 
 
-def test_d2_output_shapes_and_edges():
+def test_d2_output_shapes_and_edges() -> None:
     nodes = [
         {"id": "k8s.api", "kind": "service", "label": "api ×3"},
         {"id": "aws_db_instance.main", "kind": "database", "label": "RDS: main"},
@@ -204,7 +202,7 @@ def test_d2_output_shapes_and_edges():
     assert 'k8s_api -> aws_db_instance_main: "sql"' in out
 
 
-def test_mermaid_output_includes_legend_for_present_kinds_only():
+def test_mermaid_output_includes_legend_for_present_kinds_only() -> None:
     nodes = [{"id": "k8s.api", "kind": "service", "label": "api ×3"}]
     out = to_mermaid(nodes, [])
     assert "subgraph Legend" in out
@@ -212,19 +210,19 @@ def test_mermaid_output_includes_legend_for_present_kinds_only():
     assert "legend_database" not in out
 
 
-def test_plantuml_output_includes_legend():
+def test_plantuml_output_includes_legend() -> None:
     nodes = [{"id": "aws_db_instance.main", "kind": "database", "label": "RDS: main"}]
     out = to_plantuml(nodes, [])
     assert "legend\n  database = Database\nendlegend" in out
 
 
-def test_d2_output_includes_legend():
+def test_d2_output_includes_legend() -> None:
     nodes = [{"id": "aws_db_instance.main", "kind": "database", "label": "RDS: main"}]
     out = to_d2(nodes, [])
     assert 'database: "Database" {shape: cylinder}' in out
 
 
-def test_collapse_to_context_groups_by_kind():
+def test_collapse_to_context_groups_by_kind() -> None:
     nodes = [
         {"id": "k8s.api", "kind": "service", "label": "api"},
         {"id": "k8s.worker", "kind": "service", "label": "worker"},
