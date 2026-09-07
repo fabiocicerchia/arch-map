@@ -24,12 +24,15 @@ from typing import Any
 
 # The graph this tool builds, and the JSON it builds it from.
 #
-# A Node is {id, kind, label} plus an optional module path; an Edge is
-# {source, target, label}. Both stay plain dicts because three renderers and the
-# terraform, kubectl and DSN readers all pass them around, and a dataclass here
-# would buy nothing they do not already agree on.
+# A Node is {id, kind, label} plus an optional module path. It stays a plain
+# dict because three renderers and the terraform, kubectl and DSN readers all
+# pass them around, and a dataclass here would buy nothing they do not already
+# agree on.
 Node = dict[str, str]
-Edge = dict[str, str]
+# An Edge is (source id, target id, label) -- a tuple, which is what every
+# producer builds and every renderer unpacks. The alias said `dict[str, str]`
+# and nothing had ever built one.
+Edge = tuple[str, str, str]
 # Terraform state and kubectl output, as deep and as variable as they come.
 Json = dict[str, Any]
 
@@ -145,12 +148,12 @@ def _walk_show_json_modules(module: Json, path: str = "") -> Iterator[tuple[Json
 
 def _nodes_from_show_json(root: Json) -> list[Node]:
     """Nodes from a `terraform show -json` module tree, keeping the module path."""
-    nodes = []
+    nodes: list[Node] = []
     for resource, module in _walk_show_json_modules(root):
-        mapped = TF_KINDS.get(resource.get("type"))
+        mapped = TF_KINDS.get(resource.get("type", ""))
         if mapped:
             node_kind, label_prefix = mapped
-            name = resource.get("name", resource["address"])
+            name: str = resource.get("name", resource["address"])
             nodes.append(
                 {
                     "id": resource["address"],
@@ -164,9 +167,9 @@ def _nodes_from_show_json(root: Json) -> list[Node]:
 
 def _nodes_from_classic_state(resources: list[Json]) -> list[Node]:
     """Nodes from a classic flat state file."""
-    nodes = []
+    nodes: list[Node] = []
     for resource in resources:
-        mapped = TF_KINDS.get(resource.get("type"))
+        mapped = TF_KINDS.get(resource.get("type", ""))
         if mapped:
             node_kind, label_prefix = mapped
             # classic state: "module" is e.g. "module.db" or "module.db.module.sub"
@@ -193,12 +196,13 @@ def nodes_from_tfstate(state: Json) -> list[Node]:
 
 def _edges_from_show_json(root: Json, known_ids: set[str]) -> list[Edge]:
     """`depends_on` edges from a `terraform show -json` module tree."""
-    edges = []
+    edges: list[Edge] = []
     for resource, _module in _walk_show_json_modules(root):
-        src = resource.get("address")
+        src: str = resource.get("address", "")
         if src not in known_ids:
             continue
-        for dst in resource.get("depends_on") or []:
+        dependencies: list[str] = resource.get("depends_on") or []
+        for dst in dependencies:
             if dst in known_ids:
                 edges.append((src, dst, ""))
     return edges
@@ -206,13 +210,15 @@ def _edges_from_show_json(root: Json, known_ids: set[str]) -> list[Edge]:
 
 def _edges_from_classic_state(resources: list[Json], known_ids: set[str]) -> list[Edge]:
     """Per-instance `dependencies` edges from a classic flat state file."""
-    edges = []
+    edges: list[Edge] = []
     for resource in resources:
         src = f"{resource['type']}.{resource['name']}"
         if src not in known_ids:
             continue
-        for instance in resource.get("instances", []):
-            for dst in instance.get("dependencies") or []:
+        instances: list[Json] = resource.get("instances", [])
+        for instance in instances:
+            dependencies: list[str] = instance.get("dependencies") or []
+            for dst in dependencies:
                 if dst in known_ids:
                     edges.append((src, dst, ""))
     return edges
@@ -246,13 +252,14 @@ def _kubectl_get(resource_kind: str, namespace: str) -> list[Json]:
 
 def _k8s_workloads(namespace: str) -> tuple[list[Node], dict[str, list[str]]]:
     """Deployment nodes, and the literal env values each workload's containers carry."""
-    nodes, env_by_workload = [], {}
+    nodes: list[Node] = []
+    env_by_workload: dict[str, list[str]] = {}
     for deployment in _kubectl_get("deployments", namespace):
         name = deployment["metadata"]["name"]
         replicas = deployment["spec"].get("replicas", 1)
         workload_id = f"k8s.{name}"
         nodes.append({"id": workload_id, "kind": "service", "label": f"{name} ×{replicas}"})
-        env_values = []
+        env_values: list[str] = []
         for container in deployment["spec"]["template"]["spec"].get("containers", []):
             for env_var in container.get("env", []):
                 # env entries without "value" are valueFrom refs: nothing to read here
@@ -265,9 +272,9 @@ def _k8s_workloads(namespace: str) -> tuple[list[Node], dict[str, list[str]]]:
 
 def _k8s_selectors(namespace: str) -> dict[str, str | None]:
     """Service name -> the app label its selector targets, or None when it has none."""
-    selectors = {}
+    selectors: dict[str, str | None] = {}
     for service in _kubectl_get("services", namespace):
-        selector = service["spec"].get("selector") or {}
+        selector: dict[str, str] = service["spec"].get("selector") or {}
         app = selector.get("app") or selector.get("app.kubernetes.io/name")
         selectors[service["metadata"]["name"]] = app
     return selectors
@@ -275,14 +282,17 @@ def _k8s_selectors(namespace: str) -> dict[str, str | None]:
 
 def _k8s_ingresses(namespace: str, selectors: dict[str, str | None]) -> tuple[list[Node], list[Edge]]:
     """Ingress nodes and their ingress->workload edges, wired through the selectors."""
-    nodes, edges = [], []
+    nodes: list[Node] = []
+    edges: list[Edge] = []
     for ingress in _kubectl_get("ingresses", namespace):
         name = ingress["metadata"]["name"]
         ingress_id = f"k8s.ing.{name}"
         nodes.append({"id": ingress_id, "kind": "edge", "label": f"Ingress: {name}"})
-        for rule in ingress["spec"].get("rules", []):
-            for path in rule.get("http", {}).get("paths", []):
-                service_name = path.get("backend", {}).get("service", {}).get("name")
+        rules: list[Json] = ingress["spec"].get("rules", [])
+        for rule in rules:
+            paths: list[Json] = rule.get("http", {}).get("paths", [])
+            for path in paths:
+                service_name: str = path.get("backend", {}).get("service", {}).get("name", "")
                 app = selectors.get(service_name)
                 if app:
                     edges.append((ingress_id, f"k8s.{app}", rule.get("host", "")))
@@ -346,10 +356,10 @@ def edges_from_env_dsns(nodes: list[Node], env_by_workload: dict[str, list[str]]
          distinct token — covers bucket names, queue URLs, function names,
          etc. that aren't connection strings.
     """
-    edges = []
+    edges: list[Edge] = []
     datastores = [node for node in nodes if node["kind"] in DATASTORE_KINDS]
     for workload_id, env_values in env_by_workload.items():
-        matched = set()
+        matched: set[str] = set()
         for value in env_values:
             dsn = DSN_RE.search(value)
             if dsn:
@@ -401,7 +411,8 @@ def collapse_to_context(nodes: list[Node], edges: list[Edge]) -> tuple[list[Node
         for kind, count in sorted(kind_counts.items())
     ]
     kind_by_id = {node["id"]: node["kind"] for node in nodes}
-    seen, context_edges = set(), []
+    seen: set[tuple[str, str]] = set()
+    context_edges: list[Edge] = []
     for src, dst, _label in edges:
         src_kind, dst_kind = kind_by_id.get(src), kind_by_id.get(dst)
         if not src_kind or not dst_kind or src_kind == dst_kind or (src_kind, dst_kind) in seen:
@@ -416,14 +427,14 @@ def _by_kind(nodes: list[Node]) -> list[tuple[str, list[Node]]]:
 
     Shared so the three formats can never drift into different orderings.
     """
-    grouped = defaultdict(list)
+    grouped: defaultdict[str, list[Node]] = defaultdict(list)
     for node in nodes:
         grouped[node["kind"]].append(node)
     return sorted(grouped.items())
 
 
-def _kind_subgraph_lines(group: tuple[str, list[Node]], indent: str) -> list[str]:
-    lines = []
+def _kind_subgraph_lines(group: list[Node], indent: str) -> list[str]:
+    lines: list[str] = []
     for kind, kgroup in _by_kind(group):
         lines.append(f"{indent}subgraph {kind}s")
         for node in kgroup:
@@ -439,7 +450,7 @@ def to_mermaid(nodes: list[Node], edges: list[Edge], title: str = DEFAULT_TITLE)
         "flowchart TB",
         f"  %% {title} — generated by arch-map, do not edit by hand",
     ]
-    by_module = {}
+    by_module: dict[str, list[Node]] = {}
     for node in nodes:
         by_module.setdefault(node.get("module", ""), []).append(node)
     root = by_module.pop("", [])
@@ -562,7 +573,8 @@ def _build_parser() -> argparse.ArgumentParser:
 
 def _collect(args: argparse.Namespace) -> tuple[list[Node], list[Edge]]:
     """Nodes and edges from every source the flags asked for, in source order."""
-    nodes, edges = [], []
+    nodes: list[Node] = []
+    edges: list[Edge] = []
     if args.tfstate:
         tf_state = json.loads(Path(args.tfstate).read_text())
         tf_nodes = nodes_from_tfstate(tf_state)
