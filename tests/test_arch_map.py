@@ -1,6 +1,9 @@
+import pytest
+
 from arch_map import (
     collapse_to_context,
     edges_from_env_dsns,
+    main,
     nodes_from_tfstate,
     sanitize,
     to_d2,
@@ -238,3 +241,27 @@ def test_collapse_to_context_groups_by_kind() -> None:
         "group_database": "database (1)",
     }
     assert cedges == [("group_service", "group_database", "")]
+
+
+@pytest.mark.parametrize(
+    ("name", "text"),
+    [
+        ("empty.json", ""),
+        ("notjson.json", "not json at all\n"),
+        ("truncated.json", '{"resources": [{"type": "aws_db_instance"'),
+        ("deep.json", "[" * 10_000 + "]" * 10_000),
+        ("other.json", '{"hello": "world"}'),
+    ],
+)
+def test_unusable_tfstate_is_one_line_and_an_exit_code(tmp_path, capsys, name, text) -> None:
+    """A truncated `terraform state pull` is the ordinary way to get here, and a
+    traceback names the parser rather than the file that was wrong."""
+    state = tmp_path / name
+    state.write_text(text)
+    assert main(["--tfstate", str(state), "-o", str(tmp_path / "out.md")]) == 65
+    assert capsys.readouterr().err.startswith(f"arch-map: {state}")
+
+
+def test_missing_tfstate_is_noinput(tmp_path, capsys) -> None:
+    assert main(["--tfstate", str(tmp_path / "absent.json"), "-o", "-"]) == 66
+    assert "no such file" in capsys.readouterr().err

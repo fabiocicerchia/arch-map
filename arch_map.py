@@ -38,6 +38,22 @@ Json = dict[str, Any]
 
 DEFAULT_TITLE = "Architecture"
 
+# Exit codes, sysexits(3). The state file is written by something else — a
+# `terraform state pull`, a CI artifact — so "this file is unusable" is an
+# expected outcome and needs its own code, distinct from argparse's 2.
+EX_DATAERR = 65
+EX_NOINPUT = 66
+EX_IOERR = 74
+
+
+class StateError(Exception):
+    """A state file this tool cannot use, carrying the exit code that reports it."""
+
+    def __init__(self, message: str, code: int) -> None:
+        super().__init__(message)
+        self.code = code
+
+
 # Terraform resource type -> (node kind, label prefix)
 TF_KINDS = {
     "aws_db_instance": ("database", "RDS"),
@@ -183,6 +199,41 @@ def _nodes_from_classic_state(resources: list[Json]) -> list[Node]:
                 }
             )
     return nodes
+
+
+def read_tfstate(path: str) -> Json:
+    """Parse a terraform state file, or raise StateError.
+
+    Nobody hand-writes this file: it arrives from `terraform state pull`, a
+    remote backend or a CI artifact, and a truncated download, an HTML error
+    page from a proxy or an empty file are all ordinary ways for it to arrive
+    broken. Each one becomes one line naming the file and an exit code — never
+    a traceback, which says nothing about which input was wrong.
+    """
+    try:
+        state = json.loads(Path(path).read_text())
+    except FileNotFoundError:
+        raise StateError(f"{path}: no such file", EX_NOINPUT) from None
+    except UnicodeDecodeError:
+        raise StateError(f"{path}: not valid UTF-8, so not terraform state", EX_DATAERR) from None
+    except OSError as exc:
+        raise StateError(f"{path}: {exc.strerror}", EX_IOERR) from None
+    except json.JSONDecodeError as exc:
+        raise StateError(f"{path}: not valid terraform state ({exc})", EX_DATAERR) from None
+    except RecursionError:
+        # json recurses once per level, so a file that is nothing but 10k open
+        # brackets exhausts the stack before any of it is state.
+        raise StateError(f"{path}: nested too deeply to parse", EX_DATAERR) from None
+
+    # Shape, not just syntax: `resources` is classic state, `values` is
+    # `terraform show -json`. Neither means this is some other JSON document,
+    # and an empty diagram is a worse answer than saying so.
+    if not isinstance(state, dict) or not ("resources" in state or "values" in state):
+        raise StateError(
+            f"{path}: valid JSON, but not terraform state — no top-level `resources` or `values`",
+            EX_DATAERR,
+        )
+    return state
 
 
 def nodes_from_tfstate(state: Json) -> list[Node]:
@@ -576,7 +627,7 @@ def _collect(args: argparse.Namespace) -> tuple[list[Node], list[Edge]]:
     nodes: list[Node] = []
     edges: list[Edge] = []
     if args.tfstate:
-        tf_state = json.loads(Path(args.tfstate).read_text())
+        tf_state = read_tfstate(args.tfstate)
         tf_nodes = nodes_from_tfstate(tf_state)
         nodes.extend(tf_nodes)
         edges.extend(edges_from_tfstate(tf_state, {node["id"] for node in tf_nodes}))
@@ -595,7 +646,12 @@ def main(argv: list[str] | None = None) -> int:
     if not args.tfstate and not args.k8s:
         parser.error("need at least one of --tfstate / --k8s")
 
-    nodes, edges = _collect(args)
+    try:
+        nodes, edges = _collect(args)
+    except StateError as err:
+        print(f"arch-map: {err}", file=sys.stderr)  # noqa: T201 — the tool's output
+        return err.code
+
     if args.level == "context":
         nodes, edges = collapse_to_context(nodes, edges)
 
