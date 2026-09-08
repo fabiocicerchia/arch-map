@@ -23,13 +23,13 @@ grouped by kind, ingress→service edges wired from selectors.
 ## Install
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/fabiocicerchia/arch-map/main/install.sh | bash
+pipx install git+https://github.com/fabiocicerchia/arch-map
 ```
 
-Or with pipx directly:
+Or with pip:
 
 ```sh
-pipx install git+https://github.com/fabiocicerchia/arch-map
+pip install --user git+https://github.com/fabiocicerchia/arch-map
 ```
 
 ## CI recipe
