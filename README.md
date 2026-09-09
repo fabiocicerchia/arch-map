@@ -48,6 +48,24 @@ pip install --user git+https://github.com/fabiocicerchia/arch-map
 Bonus: the diff itself is an architecture-change review artifact — "this PR
 adds a queue" is visible in the diagram diff.
 
+## Verifying the image
+
+Every published image is signed with [cosign][cosign], keyless: the identity in
+the signature is the workflow that published it, not a key anybody holds.
+
+```sh
+cosign verify ghcr.io/fabiocicerchia/arch-map:latest \
+  --certificate-identity-regexp \
+    'https://github.com/fabiocicerchia/arch-map/.github/workflows/.*' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
+
+`no signatures found` means the tag predates signing, not that verification was
+set up wrongly — a wrong identity or issuer says so explicitly. Re-run the
+publish workflow for that tag to sign it.
+
+[cosign]: https://docs.sigstore.dev/
+
 ## Development
 
 `make dev` then `make test` / `make lint`. Run `make setup` once to install the
