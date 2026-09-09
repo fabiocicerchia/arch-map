@@ -1,0 +1,66 @@
+.TH ARCH\-MAP 1 "2026-09" "arch-map" "User Commands"
+.SH NAME
+arch-map \- a living C4-style container diagram from real infrastructure
+.SH SYNOPSIS
+.B arch-map
+.RI [ options ]
+.SH DESCRIPTION
+Builds a C4-style architecture diagram from infrastructure that actually
+exists, rather than from a drawing kept by hand: Terraform state, a live
+Kubernetes namespace, or both at once.
+.PP
+The output is Mermaid by default, which renders natively on GitHub, so the
+diagram can live in the repository and be regenerated instead of redrawn.
+.SH OPTIONS
+.TP
+.BI \-\-tfstate " FILE"
+Terraform state JSON: either a state file, or the output of
+.BR "terraform show \-json" .
+.TP
+.BI \-\-k8s " NAMESPACE"
+Read live workloads, services and ingresses from this namespace via
+.BR kubectl .
+.TP
+.BI \-o " FILE" ", " \-\-output " FILE"
+Write here instead of standard output.
+.TP
+.BI \-\-title " TITLE"
+Diagram title.
+.TP
+.BI \-\-level " LEVEL"
+.BR context ,
+.B container
+(default) or
+.BR component .
+Context collapses to one box per kind; container and component show every
+discovered node.
+.TP
+.BI \-\-format " FORMAT"
+Diagram syntax; the default is
+.BR mermaid .
+.SH EXIT STATUS
+.TP
+.B 0
+A diagram was produced.
+.TP
+.B non-zero
+No source was given, or a source could not be read.
+.SH EXAMPLES
+.PP
+From Terraform state:
+.PP
+.RS
+.B arch-map \-\-tfstate terraform.tfstate \-o ARCHITECTURE.md
+.RE
+.PP
+From a live namespace:
+.PP
+.RS
+.B arch-map \-\-k8s payments
+.RE
+.SH SEE ALSO
+.BR terraform (1),
+.BR kubectl (1).
+Project documentation:
+.UR https://github.com/fabiocicerchia/arch-map
+.UE
