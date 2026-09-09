@@ -20,7 +20,7 @@ import sys
 from collections import Counter, defaultdict
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 # The graph this tool builds, and the JSON it builds it from.
 #
@@ -233,7 +233,9 @@ def read_tfstate(path: str) -> Json:
             f"{path}: valid JSON, but not terraform state — no top-level `resources` or `values`",
             EX_DATAERR,
         )
-    return state
+    # json.loads hands back Any, and narrowing Any with isinstance gives
+    # dict[Unknown, Unknown]; the cast states what the check above guarantees.
+    return cast(Json, state)
 
 
 def nodes_from_tfstate(state: Json) -> list[Node]:

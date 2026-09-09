@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from arch_map import (
@@ -253,7 +255,9 @@ def test_collapse_to_context_groups_by_kind() -> None:
         ("other.json", '{"hello": "world"}'),
     ],
 )
-def test_unusable_tfstate_is_one_line_and_an_exit_code(tmp_path, capsys, name, text) -> None:
+def test_unusable_tfstate_is_one_line_and_an_exit_code(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], name: str, text: str
+) -> None:
     """A truncated `terraform state pull` is the ordinary way to get here, and a
     traceback names the parser rather than the file that was wrong."""
     state = tmp_path / name
@@ -262,6 +266,6 @@ def test_unusable_tfstate_is_one_line_and_an_exit_code(tmp_path, capsys, name, t
     assert capsys.readouterr().err.startswith(f"arch-map: {state}")
 
 
-def test_missing_tfstate_is_noinput(tmp_path, capsys) -> None:
+def test_missing_tfstate_is_noinput(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["--tfstate", str(tmp_path / "absent.json"), "-o", "-"]) == 66
     assert "no such file" in capsys.readouterr().err
