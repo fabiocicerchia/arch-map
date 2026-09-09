@@ -31,13 +31,13 @@ A CI job that regenerates the diagram has to tell "the state file was unusable"
 from "the diagram changed", so each expected failure has its own code from
 `sysexits(3)`:
 
-| Code | Meaning                                                              |
-| ---- | -------------------------------------------------------------------- |
-| 0    | the diagram was written                                              |
-| 2    | argparse rejected the command line                                   |
+| Code | Meaning                                                                                              |
+| ---- | ---------------------------------------------------------------------------------------------------- |
+| 0    | the diagram was written                                                                              |
+| 2    | argparse rejected the command line                                                                   |
 | 65   | the state file is not valid JSON, is nested too deeply, or is valid JSON that is not terraform state |
-| 66   | the state file does not exist                                        |
-| 74   | the state file exists but could not be read                          |
+| 66   | the state file does not exist                                                                        |
+| 74   | the state file exists but could not be read                                                          |
 
 A truncated `terraform state pull` is the usual way to see 65. It prints one
 line naming the file and what was wrong with it — never a traceback.
