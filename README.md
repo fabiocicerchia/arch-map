@@ -20,6 +20,20 @@ Produces a GitHub-native Mermaid flowchart: workloads (with replica counts),
 ingresses with hostnames, databases, queues, buckets, caches and edges —
 grouped by kind, ingress→service edges wired from selectors.
 
+## Features
+
+- Built from real infrastructure — Terraform state and live Kubernetes
+  resources — rather than a hand-drawn source of truth that drifts.
+- Emits GitHub-native **Mermaid** into `ARCHITECTURE.md`, so it renders in the
+  repo with no diagramming tool in the loop.
+- Groups nodes by kind: workloads with replica counts, ingresses with
+  hostnames, databases, queues, buckets and caches.
+- Wires ingress→service edges from **selectors**, not from naming conventions.
+- Works from either source alone — `--tfstate` on its own needs no cluster
+  access.
+- Made to be regenerated in CI, which turns the diagram diff into an
+  architecture-change review artifact: "this PR adds a queue" becomes visible.
+
 ## Install
 
 ```sh
