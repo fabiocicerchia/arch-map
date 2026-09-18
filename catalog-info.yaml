@@ -1,0 +1,23 @@
+# Backstage catalog entry, read by paved's scorecard plugin.
+#
+# Every check paved scores is derived from this file alone — no cluster
+# access, no CI credentials. What is absent here is absent from the score.
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: arch-map
+  description: >-
+      Living C4-style architecture diagrams generated from Terraform state and live Kubernetes resources,
+      committed as Mermaid in your repo. Diagrams that can't rot.
+  annotations:
+    github.com/project-slug: fabiocicerchia/arch-map
+    backstage.io/source-location: url:https://github.com/fabiocicerchia/arch-map/
+    backstage.io/techdocs-ref: dir:.
+  links:
+    - url: https://github.com/fabiocicerchia/arch-map
+      title: Source
+spec:
+  type: library
+  lifecycle: production
+  owner: group:default/kodebeat
+  system: oss-tools
