@@ -57,6 +57,14 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
           skip-github-pull-request: true
+          # The PAT, not GITHUB_TOKEN, for the release itself. A release PR
+          # merged while release.yml could not start (9 Sep) left its release
+          # to be created later, on a merge commit whose .github/workflows
+          # differ from main's; GitHub then treats creating that tag as a
+          # workflow change, which needs the `workflows` permission —
+          # GITHUB_TOKEN can never hold it, so every retry was a 403. The PAT
+          # needs Contents and Workflows read & write on this repository.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
 
   build:
     needs: release-please
