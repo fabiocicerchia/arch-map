@@ -9,7 +9,7 @@ Feature: Branding the documentation site
   Scenario: The docs and the splash page share the project's blue accent pair
     Given the project's accent pair is sky blue #38bdf8 and blue #3b82f6
     When a reader opens the rendered docs and the splash page
-    Then the docs header, chrome and primary buttons use the accent pair
+    Then the docs primary colour, links and primary buttons use the accent pair
     And the splash page uses the same accent pair
     And changing the pair in the one theme stylesheet changes both pages
 

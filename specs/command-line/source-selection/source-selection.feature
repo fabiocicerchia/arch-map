@@ -13,7 +13,7 @@ Feature: Selecting sources
   @id:command-line.source-selection.002 @rule:cli.sources.combined-in-one-diagram @inferred @source:arch_map.py#_collect
   Scenario: Terraform and Kubernetes sources given together appear in one diagram
     Given a Terraform state file with the database "main"
-    And the Kubernetes namespace "production" with the Deployment "api"
+    And the Kubernetes namespace "production" with the Deployment "api" whose environment names "main"
     When the operator generates the diagram from both sources
     Then the diagram shows both "RDS: main" and "api ×1"
-    And links inferred from "api"'s environment to "main" are drawn
+    And a link runs from "api ×1" to "RDS: main"

@@ -8,7 +8,7 @@ Feature: Running arch-map from its container image
   @id:developer-tooling.container-image.001 @rule:tooling.container-image.runs-arch-map-as-entrypoint @inferred @source:Dockerfile#ENTRYPOINT
   Scenario: Arguments given to the container go straight to arch-map
     Given a Terraform state file mounted into the container at /work/terraform.tfstate
-    When the operator runs the image with arguments "--tf /work/terraform.tfstate"
+    When the operator runs the image with arguments "--tfstate /work/terraform.tfstate"
     Then arch-map runs with those arguments
     And the generated architecture document is written to stdout
 
@@ -22,4 +22,4 @@ Feature: Running arch-map from its container image
   Scenario: The image does not include kubectl, so live clusters need it supplied
     Given no kubectl or kubeconfig has been provided to the container
     When the operator runs the image with arguments "--k8s shop"
-    Then arch-map cannot read the namespace and reports that kubectl is not available
+    Then arch-map stops with a Python traceback ending in "RuntimeError: kubectl is not on PATH"

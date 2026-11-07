@@ -6,10 +6,10 @@ Feature: Reaching the cluster through kubectl
   Scenario Outline: A missing or failing kubectl ends the run with a traceback instead of a one-line error
     Given <situation>
     When the operator generates the diagram for the Kubernetes namespace "production"
-    Then arch-map stops with a Python traceback ending in "<error>"
+    Then arch-map stops with a Python traceback whose last line starts with "<error>"
     And no diagram is written
 
     Examples:
       | situation                            | error                                |
       | kubectl is not installed on the PATH | RuntimeError: kubectl is not on PATH |
-      | kubectl cannot reach the cluster     | CalledProcessError                   |
+      | kubectl cannot reach the cluster     | subprocess.CalledProcessError        |
