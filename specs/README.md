@@ -43,4 +43,4 @@ Building the architecture inventory from Terraform state files.
 - **Cloud resource recognition**: [Recognising cloud resources](terraform-discovery/cloud-resource-catalog/cloud-resource-recognition.feature) (1)
 - **Resource dependencies**: [Linking resources by recorded dependencies](terraform-discovery/dependency-links/resource-dependencies.feature) (1)
 - **State formats and modules**: [Reading classic and show-json state, including modules](terraform-discovery/state-formats/state-formats-and-modules.feature) (2)
-- **State file loading**: [Rejecting unusable Terraform state](terraform-discovery/state-loading/state-file-loading.feature) (2)
+- **State file loading**: [Rejecting unusable Terraform state](terraform-discovery/state-loading/state-file-loading.feature) (1)

@@ -21,11 +21,5 @@ Feature: Rejecting unusable Terraform state
       | truncated mid-object             | 65        | not valid terraform state               |
       | not UTF-8                        | 65        | not valid UTF-8, so not terraform state |
       | 10,000 levels of nested brackets | 65        | nested too deeply to parse              |
+      | valid JSON but not state         | 65        | valid JSON, but not terraform state     |
       | a directory or unreadable        | 74        | the operating system's reason           |
-
-  @id:terraform-discovery.state-loading.002 @rule:terraform.state-loading.non-state-json-refused @verified @source:arch_map.py#read_tfstate @test:tests/test_arch_map.py#test_unusable_tfstate_is_one_line_and_an_exit_code
-  Scenario: Valid JSON that is not Terraform state is refused rather than drawn as an empty diagram
-    Given the state file at "infra.tfstate" is the JSON document {"hello": "world"}
-    When the operator generates the diagram from "infra.tfstate"
-    Then arch-map exits with code 65
-    And stderr reads "arch-map: infra.tfstate: valid JSON, but not terraform state — no top-level `resources` or `values`"

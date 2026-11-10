@@ -8,7 +8,7 @@
     "source": "arch_map.py#main"
    },
    {
-    "candidate": "Full per-provider list of resource type mappings (OCI, OVH, Vultr, IBM, Alibaba, Scaleway, Linode, DigitalOcean\u2026)",
+    "candidate": "Full per-provider list of resource type mappings (OCI, OVH, Vultr, IBM, Alibaba, Scaleway, Linode, DigitalOcean…)",
     "covered_by": "terraform.catalog.known-types-mapped-unknown-ignored",
     "reason": "TRIVIAL",
     "source": "arch_map.py#TF_KINDS"
@@ -173,7 +173,9 @@
   ],
   "arch-map/makefile": []
  },
- "retired": [],
+ "retired": [
+  "terraform-discovery.state-loading.002"
+ ],
  "scenarios": {
   "architecture-views.context-view.001": {
    "file": "specs/architecture-views/context-view/c4-levels.feature",
@@ -463,18 +465,6 @@
    "tests": [
     "tests/test_arch_map.py#test_unusable_tfstate_is_one_line_and_an_exit_code",
     "tests/test_arch_map.py#test_missing_tfstate_is_noinput"
-   ]
-  },
-  "terraform-discovery.state-loading.002": {
-   "file": "specs/terraform-discovery/state-loading/state-file-loading.feature",
-   "fingerprint": "069cd233985a",
-   "human": false,
-   "rule": "terraform.state-loading.non-state-json-refused",
-   "source": "arch_map.py#read_tfstate",
-   "status": "verified",
-   "test": "tests/test_arch_map.py#test_unusable_tfstate_is_one_line_and_an_exit_code",
-   "tests": [
-    "tests/test_arch_map.py#test_unusable_tfstate_is_one_line_and_an_exit_code"
    ]
   }
  },
