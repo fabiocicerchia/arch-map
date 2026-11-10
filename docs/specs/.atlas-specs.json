@@ -1,0 +1,273 @@
+{
+ "excluded": {
+  "stylesheets/extra": [
+   {
+    "candidate": "Header translucency, blur, hairline divider and shadow on scroll",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "docs/stylesheets/extra.css#.md-header"
+   },
+   {
+    "candidate": "Heading weights, letter-spacing and margins",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-typeset h1"
+   },
+   {
+    "candidate": "Rounded, bordered code blocks",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-typeset .highlight"
+   },
+   {
+    "candidate": "Pill-shaped buttons with gradient primary and hover lift",
+    "covered_by": "docs.theme.shared-accent-palette",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-typeset .md-button"
+   },
+   {
+    "candidate": "Home hero gradient title, tagline width and button spacing",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-typeset .hero"
+   },
+   {
+    "candidate": "Feature card radius, border, hover lift and accent-coloured icons",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-typeset .grid.cards > ul > li"
+   },
+   {
+    "candidate": "Active nav link and nav title weights",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-nav__title"
+   },
+   {
+    "candidate": "Footer background, divider and muted link colour",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-footer-meta"
+   },
+   {
+    "candidate": "Smooth scrolling for in-page anchors",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#html"
+   }
+  ]
+ },
+ "lifted": {
+  "stylesheets/extra": []
+ },
+ "retired": [
+  "docs.documentation-site.theme-and-branding.001",
+  "docs.documentation-site.theme-and-branding.003",
+  "docs.documentation-site.theme-and-branding.004"
+ ],
+ "scenarios": {
+  "docs.documentation-site.theme-and-branding.002": {
+   "file": "docs/specs/documentation-site/theme-and-branding/docs-theme-and-branding.feature",
+   "fingerprint": "564588beee72",
+   "human": false,
+   "rule": "docs.theme.no-network-fonts",
+   "source": "docs/stylesheets/extra.css#:root",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "docs.documentation-site.theme-and-branding.005": {
+   "file": "docs/specs/documentation-site/theme-and-branding/docs-theme-and-branding.feature",
+   "fingerprint": "721086d36c47",
+   "human": false,
+   "rule": "docs.theme.wide-tables-visible-on-narrow-screens",
+   "source": "docs/stylesheets/extra.css#.md-typeset table:not([class])",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  }
+ },
+ "taxonomy": {
+  "domains": [
+   {
+    "areas": [
+     {
+      "description": "Accepting both `terraform show -json` output and classic flat state files and picking the right reader.",
+      "slug": "state-formats",
+      "title": "State formats"
+     },
+     {
+      "description": "Mapping Terraform resource types to node kinds and label prefixes, such as databases, queues and load balancers.",
+      "slug": "resource-mapping",
+      "title": "Resource mapping"
+     },
+     {
+      "description": "Keeping track of which Terraform module each resource belongs to, so the diagram can group them.",
+      "slug": "module-grouping",
+      "title": "Module grouping"
+     },
+     {
+      "description": "Spotting state files that are missing, unreadable, not JSON, nested too deeply or not Terraform state at all.",
+      "slug": "state-validation",
+      "title": "State validation"
+     }
+    ],
+    "description": "Reading infrastructure from Terraform state and turning each resource into a typed diagram node.",
+    "slug": "terraform-discovery",
+    "title": "Terraform discovery"
+   },
+   {
+    "areas": [
+     {
+      "description": "Finding deployments and similar workloads along with their replica counts.",
+      "slug": "workloads",
+      "title": "Workloads"
+     },
+     {
+      "description": "Reading services and their label selectors to work out which workloads they route to.",
+      "slug": "services-and-selectors",
+      "title": "Services and selectors"
+     },
+     {
+      "description": "Capturing ingresses and their hostnames as entry points into the system.",
+      "slug": "ingresses",
+      "title": "Ingresses"
+     },
+     {
+      "description": "Reading container environment values so connections between components can be inferred.",
+      "slug": "container-environment",
+      "title": "Container environment"
+     }
+    ],
+    "description": "Collecting live resources from a Kubernetes namespace through kubectl.",
+    "slug": "kubernetes-discovery",
+    "title": "Kubernetes discovery"
+   },
+   {
+    "areas": [
+     {
+      "description": "Drawing edges from the dependencies recorded in Terraform state.",
+      "slug": "terraform-dependencies",
+      "title": "Terraform dependencies"
+     },
+     {
+      "description": "Guessing which service talks to which datastore from DSN-style hosts and whole-name matches in environment values.",
+      "slug": "datastore-detection",
+      "title": "Datastore detection"
+     },
+     {
+      "description": "Connecting ingresses to services and services to workloads through label selectors.",
+      "slug": "traffic-routing",
+      "title": "Traffic routing"
+     }
+    ],
+    "description": "Working out the edges between components from the data each source provides.",
+    "slug": "relationship-inference",
+    "title": "Relationship inference"
+   },
+   {
+    "areas": [
+     {
+      "description": "The default GitHub-native Mermaid flowchart, including Terraform module subgraphs.",
+      "slug": "mermaid",
+      "title": "Mermaid diagrams"
+     },
+     {
+      "description": "An alternative PlantUML rendering of the same architecture.",
+      "slug": "plantuml",
+      "title": "PlantUML diagrams"
+     },
+     {
+      "description": "An alternative D2 rendering of the same architecture.",
+      "slug": "d2",
+      "title": "D2 diagrams"
+     },
+     {
+      "description": "Grouping nodes by kind in a fixed order so every format stays consistent and diffs stay stable.",
+      "slug": "layout-and-ordering",
+      "title": "Layout and ordering"
+     }
+    ],
+    "description": "Rendering the collected nodes and edges as an architecture diagram in the chosen format.",
+    "slug": "diagram-output",
+    "title": "Diagram output"
+   },
+   {
+    "areas": [
+     {
+      "description": "Choosing sources, namespace, output format and output file from the command line.",
+      "slug": "command-options",
+      "title": "Command options"
+     },
+     {
+      "description": "Writing the diagram to ARCHITECTURE.md so it lives in the repo and changes show up in review.",
+      "slug": "architecture-file",
+      "title": "Architecture file"
+     },
+     {
+      "description": "Distinct sysexits codes and a single readable error line for each expected failure, never a traceback.",
+      "slug": "exit-codes-and-errors",
+      "title": "Exit codes and errors"
+     },
+     {
+      "description": "Regenerating the diagram in CI so it tracks what is actually deployed.",
+      "slug": "ci-regeneration",
+      "title": "CI regeneration"
+     }
+    ],
+    "description": "How people run arch-map and keep the diagram up to date automatically.",
+    "slug": "cli-and-ci",
+    "title": "Command line and CI"
+   },
+   {
+    "areas": [
+     {
+      "description": "Accent colours, fonts, header, buttons, code blocks, tables and footer, kept offline with no CDN or web fonts.",
+      "slug": "theme-and-branding",
+      "title": "Theme and branding"
+     },
+     {
+      "description": "The splash hero, tagline, call-to-action buttons and feature cards.",
+      "slug": "home-page",
+      "title": "Home page"
+     },
+     {
+      "description": "Getting-started and architecture pages that cover installing, running and the design.",
+      "slug": "guides",
+      "title": "Guides"
+     }
+    ],
+    "description": "The public documentation site and guides that explain the product.",
+    "slug": "documentation-site",
+    "title": "Documentation site"
+   },
+   {
+    "areas": [
+     {
+      "description": "Make targets, editable installs and building the distributable package.",
+      "slug": "build-and-packaging",
+      "title": "Build and packaging"
+     },
+     {
+      "description": "Tests, linting and pinned pre-commit hooks that run the same way locally and in CI.",
+      "slug": "quality-checks",
+      "title": "Quality checks"
+     },
+     {
+      "description": "Automated version bumps and changelog generation from Conventional Commit messages.",
+      "slug": "releases",
+      "title": "Releases"
+     },
+     {
+      "description": "Secret and vulnerability scanning, plus automated dependency update pull requests.",
+      "slug": "security-and-dependencies",
+      "title": "Security and dependencies"
+     }
+    ],
+    "description": "Building, checking, releasing and securing the project itself.",
+    "slug": "developer-tooling",
+    "title": "Developer tooling"
+   }
+  ]
+ }
+}

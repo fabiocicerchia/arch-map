@@ -1,0 +1,634 @@
+{
+ "excluded": {
+  "arch-map/arch-map": [
+   {
+    "candidate": "State errors printed as a prefixed stderr line with sysexits codes (error-reporting area)",
+    "covered_by": "terraform.state-loading.unusable-file-reported-with-exit-code",
+    "reason": "DUPLICATE_OF",
+    "source": "arch_map.py#main"
+   },
+   {
+    "candidate": "Full per-provider list of resource type mappings (OCI, OVH, Vultr, IBM, Alibaba, Scaleway, Linode, DigitalOcean…)",
+    "covered_by": "terraform.catalog.known-types-mapped-unknown-ignored",
+    "reason": "TRIVIAL",
+    "source": "arch_map.py#TF_KINDS"
+   },
+   {
+    "candidate": "Env entries using valueFrom are ignored for connection inference",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "arch_map.py#_k8s_workloads"
+   },
+   {
+    "candidate": "Each datastore linked at most once per workload; first match wins",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "arch_map.py#edges_from_env_dsns"
+   },
+   {
+    "candidate": "kubectl invoked with a fixed argv and resolved binary path",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "arch_map.py#_kubectl_get"
+   },
+   {
+    "candidate": "Shared kind ordering across renderers (_by_kind)",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "arch_map.py#_by_kind"
+   },
+   {
+    "candidate": "Unknown kind falls back to a plain box / component / rectangle shape",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "arch_map.py#SHAPES"
+   },
+   {
+    "candidate": "Per-kind shape table for each format",
+    "covered_by": "output.alt-formats.same-diagram-in-chosen-syntax",
+    "reason": "DUPLICATE_OF",
+    "source": "arch_map.py#SHAPES"
+   },
+   {
+    "candidate": "Dockerfile, Makefile, pre-commit and contributor setup",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Dockerfile"
+   },
+   {
+    "candidate": "Labels not escaped for embedded quotes",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "arch_map.py#_kind_subgraph_lines"
+   }
+  ],
+  "arch-map/dockerfile": [
+   {
+    "candidate": "Build dependencies installed from a hash-pinned requirements-build.txt with build isolation off, so the wheel build fetches nothing else",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Dockerfile#RUN"
+   },
+   {
+    "candidate": "Base image pinned by digest (python:3.14-slim@sha256:...)",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Dockerfile#FROM"
+   },
+   {
+    "candidate": "Wheel built and installed with --no-deps, temporary wheel dir removed, no pip cache",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Dockerfile#RUN"
+   },
+   {
+    "candidate": "HEALTHCHECK that only checks the Python interpreter starts (meaningless for a one-shot CLI)",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Dockerfile#HEALTHCHECK"
+   },
+   {
+    "candidate": "Recommendation to run with --read-only root filesystem (comment only, not enforced)",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "Dockerfile"
+   },
+   {
+    "candidate": "Exact message and exit code when kubectl is missing",
+    "covered_by": "kubernetes-discovery/cluster-access",
+    "reason": "DUPLICATE_OF",
+    "source": "arch_map.py#_kubectl_get"
+   }
+  ],
+  "arch-map/makefile": [
+   {
+    "candidate": "`make help` lists every target that has a `## description` comment, with the name padded to 10 characters",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#help"
+   },
+   {
+    "candidate": "`make setup` installs the pre-commit hook (`pre-commit install`)",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#setup"
+   },
+   {
+    "candidate": "`make install` installs the package (`pip install .`)",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#install"
+   },
+   {
+    "candidate": "`make dev` does an editable install with the dev extras (`pip install -e \".[dev]\"`)",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#dev"
+   },
+   {
+    "candidate": "`make lint` runs every pre-commit hook on every file. CLAUDE.md says it runs `ruff check .`, so the docs are out of date",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#lint"
+   },
+   {
+    "candidate": "`make test` runs `pytest -q`",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#test"
+   },
+   {
+    "candidate": "`make build` builds the sdist and wheel (`python -m build`)",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#build"
+   },
+   {
+    "candidate": "`make run` only prints `arch-map --help`; it does not generate a diagram",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#run"
+   },
+   {
+    "candidate": "`make format` rewrites the sources with `ruff format .`",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#format"
+   },
+   {
+    "candidate": "`make analyze` type-checks with basedpyright",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#analyze"
+   }
+  ]
+ },
+ "lifted": {
+  "arch-map/arch-map": [],
+  "arch-map/dockerfile": [
+   {
+    "from_source": "Dockerfile#USER",
+    "rule": "tooling.container-image.runs-as-non-root"
+   }
+  ],
+  "arch-map/makefile": []
+ },
+ "retired": [
+  "terraform-discovery.state-loading.002"
+ ],
+ "scenarios": {
+  "architecture-views.context-view.001": {
+   "file": "specs/architecture-views/context-view/c4-levels.feature",
+   "fingerprint": "cbe94bce282f",
+   "human": false,
+   "rule": "views.context.one-box-per-kind",
+   "source": "arch_map.py#collapse_to_context",
+   "status": "verified",
+   "test": "tests/test_arch_map.py#test_collapse_to_context_groups_by_kind",
+   "tests": [
+    "tests/test_arch_map.py#test_collapse_to_context_groups_by_kind"
+   ]
+  },
+  "architecture-views.context-view.002": {
+   "file": "specs/architecture-views/context-view/c4-levels.feature",
+   "fingerprint": "9bce6b296f5d",
+   "human": false,
+   "rule": "views.container.default-shows-everything",
+   "source": "arch_map.py#_build_parser",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "command-line.generated-document.001": {
+   "file": "specs/command-line/generated-document/generated-document.feature",
+   "fingerprint": "287a8e5854e2",
+   "human": false,
+   "rule": "cli.document.titled-and-marked-generated",
+   "source": "arch_map.py#main",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "command-line.generated-document.002": {
+   "file": "specs/command-line/generated-document/generated-document.feature",
+   "fingerprint": "287a8e5854e2",
+   "human": false,
+   "rule": "cli.document.stdout-or-file-with-counts",
+   "source": "arch_map.py#main",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "command-line.source-selection.001": {
+   "file": "specs/command-line/source-selection/source-selection.feature",
+   "fingerprint": "287a8e5854e2",
+   "human": false,
+   "rule": "cli.sources.at-least-one-required",
+   "source": "arch_map.py#main",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "command-line.source-selection.002": {
+   "file": "specs/command-line/source-selection/source-selection.feature",
+   "fingerprint": "14f2c67dbeb4",
+   "human": false,
+   "rule": "cli.sources.combined-in-one-diagram",
+   "source": "arch_map.py#_collect",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "connection-inference.connection-string-links.001": {
+   "file": "specs/connection-inference/connection-string-links/connection-inference.feature",
+   "fingerprint": "911caa7be27e",
+   "human": false,
+   "rule": "connections.dsn.linked-by-host-with-protocol",
+   "source": "arch_map.py#edges_from_env_dsns",
+   "status": "verified",
+   "test": "tests/test_arch_map.py#test_edges_from_env_dsns_matches_datastore_by_name",
+   "tests": [
+    "tests/test_arch_map.py#test_edges_from_env_dsns_matches_datastore_by_name",
+    "tests/test_arch_map.py#test_edges_from_env_dsns_no_match"
+   ]
+  },
+  "connection-inference.connection-string-links.002": {
+   "file": "specs/connection-inference/connection-string-links/connection-inference.feature",
+   "fingerprint": "235de009f074",
+   "human": false,
+   "rule": "connections.dsn.host-match-is-substring",
+   "source": "arch_map.py#_datastore_in_host",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "connection-inference.connection-string-links.003": {
+   "file": "specs/connection-inference/connection-string-links/connection-inference.feature",
+   "fingerprint": "582105ebcd11",
+   "human": false,
+   "rule": "connections.name-reference.whole-token-min-length",
+   "source": "arch_map.py#_datastore_in_value",
+   "status": "verified",
+   "test": "tests/test_arch_map.py#test_edges_from_env_dsns_matches_non_dsn_by_token",
+   "tests": [
+    "tests/test_arch_map.py#test_edges_from_env_dsns_matches_non_dsn_by_token",
+    "tests/test_arch_map.py#test_edges_from_env_dsns_token_match_requires_word_boundary"
+   ]
+  },
+  "developer-tooling.container-image.001": {
+   "file": "specs/developer-tooling/container-image/container-image.feature",
+   "fingerprint": "16c5bb555294",
+   "human": false,
+   "rule": "tooling.container-image.runs-arch-map-as-entrypoint",
+   "source": "Dockerfile#ENTRYPOINT",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "developer-tooling.container-image.002": {
+   "file": "specs/developer-tooling/container-image/container-image.feature",
+   "fingerprint": "b0e998760f14",
+   "human": false,
+   "rule": "tooling.container-image.runs-as-non-root",
+   "source": "Dockerfile#USER",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "developer-tooling.container-image.003": {
+   "file": "specs/developer-tooling/container-image/container-image.feature",
+   "fingerprint": "577392e34db8",
+   "human": false,
+   "rule": "tooling.container-image.no-kubectl-bundled",
+   "source": "Dockerfile#FROM",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "diagram-output.grouping-and-legend.001": {
+   "file": "specs/diagram-output/grouping-and-legend/grouping-and-legend.feature",
+   "fingerprint": "b7247117c152",
+   "human": false,
+   "rule": "output.legend.present-kinds-only",
+   "source": "arch_map.py#_present_kinds",
+   "status": "verified",
+   "test": "tests/test_arch_map.py#test_mermaid_output_includes_legend_for_present_kinds_only",
+   "tests": [
+    "tests/test_arch_map.py#test_mermaid_output_includes_legend_for_present_kinds_only",
+    "tests/test_arch_map.py#test_plantuml_output_includes_legend",
+    "tests/test_arch_map.py#test_d2_output_includes_legend"
+   ]
+  },
+  "diagram-output.grouping-and-legend.002": {
+   "file": "specs/diagram-output/grouping-and-legend/grouping-and-legend.feature",
+   "fingerprint": "0698d950cb6b",
+   "human": false,
+   "rule": "output.ids.safe-for-diagram-syntax",
+   "source": "arch_map.py#sanitize",
+   "status": "verified",
+   "test": "tests/test_arch_map.py#test_sanitize_makes_valid_mermaid_ids",
+   "tests": [
+    "tests/test_arch_map.py#test_sanitize_makes_valid_mermaid_ids"
+   ]
+  },
+  "diagram-output.mermaid.001": {
+   "file": "specs/diagram-output/mermaid/mermaid-diagrams.feature",
+   "fingerprint": "07136b402ac6",
+   "human": false,
+   "rule": "output.mermaid.default-with-labelled-links",
+   "source": "arch_map.py#to_mermaid",
+   "status": "verified",
+   "test": "tests/test_arch_map.py#test_mermaid_output_shapes_and_edges",
+   "tests": [
+    "tests/test_arch_map.py#test_mermaid_output_shapes_and_edges"
+   ]
+  },
+  "diagram-output.plantuml.001": {
+   "file": "specs/diagram-output/plantuml/plantuml-and-d2-diagrams.feature",
+   "fingerprint": "8a799ae1d727",
+   "human": false,
+   "rule": "output.alt-formats.same-diagram-in-chosen-syntax",
+   "source": "arch_map.py#RENDERERS",
+   "status": "verified",
+   "test": "tests/test_arch_map.py#test_plantuml_output_shapes_and_edges",
+   "tests": [
+    "tests/test_arch_map.py#test_plantuml_output_shapes_and_edges",
+    "tests/test_arch_map.py#test_d2_output_shapes_and_edges"
+   ]
+  },
+  "diagram-output.plantuml.002": {
+   "file": "specs/diagram-output/plantuml/plantuml-and-d2-diagrams.feature",
+   "fingerprint": "153b21021447",
+   "human": false,
+   "rule": "output.alt-formats.no-module-grouping",
+   "source": "arch_map.py#to_plantuml",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "kubernetes-discovery.cluster-access.001": {
+   "file": "specs/kubernetes-discovery/cluster-access/cluster-access.feature",
+   "fingerprint": "001efa729f4e",
+   "human": false,
+   "rule": "kubernetes.cluster-access.kubectl-failure-reported",
+   "source": "arch_map.py#_kubectl_get",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "kubernetes-discovery.workloads.001": {
+   "file": "specs/kubernetes-discovery/workloads/kubernetes-discovery.feature",
+   "fingerprint": "2fa4ac772562",
+   "human": false,
+   "rule": "kubernetes.workloads.deployment-shown-with-replicas",
+   "source": "arch_map.py#_k8s_workloads",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "kubernetes-discovery.workloads.002": {
+   "file": "specs/kubernetes-discovery/workloads/kubernetes-discovery.feature",
+   "fingerprint": "a71edbb14ee3",
+   "human": false,
+   "rule": "kubernetes.ingress.linked-by-host-to-selected-workload",
+   "source": "arch_map.py#_k8s_ingresses",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "kubernetes-discovery.workloads.003": {
+   "file": "specs/kubernetes-discovery/workloads/kubernetes-discovery.feature",
+   "fingerprint": "a71edbb14ee3",
+   "human": false,
+   "rule": "kubernetes.ingress.link-target-assumed-to-be-deployment-name",
+   "source": "arch_map.py#_k8s_ingresses",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "terraform-discovery.cloud-resource-catalog.001": {
+   "file": "specs/terraform-discovery/cloud-resource-catalog/cloud-resource-recognition.feature",
+   "fingerprint": "2949557841b8",
+   "human": false,
+   "rule": "terraform.catalog.known-types-mapped-unknown-ignored",
+   "source": "arch_map.py#TF_KINDS",
+   "status": "verified",
+   "test": "tests/test_arch_map.py#test_tfstate_classic_format",
+   "tests": [
+    "tests/test_arch_map.py#test_tfstate_classic_format",
+    "tests/test_arch_map.py#test_tfstate_gcp_and_azure_kinds",
+    "tests/test_arch_map.py#test_tfstate_show_json_format"
+   ]
+  },
+  "terraform-discovery.dependency-links.001": {
+   "file": "specs/terraform-discovery/dependency-links/resource-dependencies.feature",
+   "fingerprint": "9324b9a9df75",
+   "human": false,
+   "rule": "terraform.dependencies.links-only-between-drawn-resources",
+   "source": "arch_map.py#edges_from_tfstate",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "terraform-discovery.state-formats.001": {
+   "file": "specs/terraform-discovery/state-formats/state-formats-and-modules.feature",
+   "fingerprint": "d49c61f2acf2",
+   "human": false,
+   "rule": "terraform.state-formats.both-formats-and-module-paths",
+   "source": "arch_map.py#nodes_from_tfstate",
+   "status": "verified",
+   "test": "tests/test_arch_map.py#test_tfstate_classic_format_module_grouping",
+   "tests": [
+    "tests/test_arch_map.py#test_tfstate_classic_format_module_grouping",
+    "tests/test_arch_map.py#test_tfstate_show_json_format_module_grouping",
+    "tests/test_arch_map.py#test_mermaid_output_groups_by_module"
+   ]
+  },
+  "terraform-discovery.state-formats.002": {
+   "file": "specs/terraform-discovery/state-formats/state-formats-and-modules.feature",
+   "fingerprint": "ec3baf9f43bd",
+   "human": false,
+   "rule": "terraform.state-formats.classic-module-resources-share-identity",
+   "source": "arch_map.py#_nodes_from_classic_state",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "terraform-discovery.state-loading.001": {
+   "file": "specs/terraform-discovery/state-loading/state-file-loading.feature",
+   "fingerprint": "069cd233985a",
+   "human": false,
+   "rule": "terraform.state-loading.unusable-file-reported-with-exit-code",
+   "source": "arch_map.py#read_tfstate",
+   "status": "verified",
+   "test": "tests/test_arch_map.py#test_unusable_tfstate_is_one_line_and_an_exit_code",
+   "tests": [
+    "tests/test_arch_map.py#test_unusable_tfstate_is_one_line_and_an_exit_code",
+    "tests/test_arch_map.py#test_missing_tfstate_is_noinput"
+   ]
+  }
+ },
+ "taxonomy": {
+  "domains": [
+   {
+    "areas": [
+     {
+      "description": "Reading a Terraform state file and rejecting missing, unreadable, malformed, non-UTF-8, deeply nested or non-state JSON with a one-line message and a distinct exit code.",
+      "slug": "state-loading",
+      "title": "State file loading"
+     },
+     {
+      "description": "Supporting both classic flat state and `terraform show -json` output, including resources nested in child modules.",
+      "slug": "state-formats",
+      "title": "State formats and modules"
+     },
+     {
+      "description": "Mapping known resource types from AWS, GCP, Azure, Hetzner, Scaleway, Alibaba, OCI, OVH, DigitalOcean, Linode, Cloudflare, Vultr and IBM onto diagram kinds and labels, and ignoring everything else.",
+      "slug": "cloud-resource-catalog",
+      "title": "Cloud resource recognition"
+     },
+     {
+      "description": "Drawing links between discovered resources from the dependencies Terraform records, limited to resources that are on the diagram.",
+      "slug": "dependency-links",
+      "title": "Resource dependencies"
+     }
+    ],
+    "description": "Building the architecture inventory from Terraform state files.",
+    "slug": "terraform-discovery",
+    "title": "Terraform discovery"
+   },
+   {
+    "areas": [
+     {
+      "description": "Querying a namespace through the locally installed kubectl, with a clear failure when kubectl is not available.",
+      "slug": "cluster-access",
+      "title": "Cluster access"
+     },
+     {
+      "description": "Showing each Deployment as a service labelled with its replica count, and collecting its literal environment values.",
+      "slug": "workloads",
+      "title": "Workloads"
+     },
+     {
+      "description": "Showing Ingresses as entry points and linking them by host to the workloads their backend Services select.",
+      "slug": "ingress-routing",
+      "title": "Ingress routing"
+     }
+    ],
+    "description": "Building the architecture inventory from a live Kubernetes namespace.",
+    "slug": "kubernetes-discovery",
+    "title": "Kubernetes discovery"
+   },
+   {
+    "areas": [
+     {
+      "description": "Linking a workload to a database, cache, queue or store when a Postgres, MySQL, MongoDB, Redis or AMQP URL in its environment names that datastore's host, labelled with the protocol.",
+      "slug": "connection-string-links",
+      "title": "Connection-string links"
+     },
+     {
+      "description": "Linking a workload to a datastore when another environment value contains the datastore's name as a whole token, skipping very short names to avoid false matches.",
+      "slug": "name-reference-links",
+      "title": "Name-reference links"
+     }
+    ],
+    "description": "Working out which workloads talk to which datastores when nothing records it explicitly.",
+    "slug": "connection-inference",
+    "title": "Connection inference"
+   },
+   {
+    "areas": [
+     {
+      "description": "Collapsing the diagram to one box per kind with counts, and links reduced to distinct kind-to-kind relationships.",
+      "slug": "context-view",
+      "title": "System context view"
+     },
+     {
+      "description": "Showing every discovered node and link, the default level; the component level currently shows the same detail.",
+      "slug": "container-view",
+      "title": "Container and component views"
+     }
+    ],
+    "description": "Choosing how much detail the C4-style diagram shows.",
+    "slug": "architecture-views",
+    "title": "Architecture views"
+   },
+   {
+    "areas": [
+     {
+      "description": "The default output, which renders natively on GitHub.",
+      "slug": "mermaid",
+      "title": "Mermaid diagrams"
+     },
+     {
+      "description": "The same diagram rendered as PlantUML.",
+      "slug": "plantuml",
+      "title": "PlantUML diagrams"
+     },
+     {
+      "description": "The same diagram rendered as D2.",
+      "slug": "d2",
+      "title": "D2 diagrams"
+     },
+     {
+      "description": "Grouping nodes by kind, giving each kind its own shape, making node ids safe for diagram syntax, and adding a legend for the kinds present.",
+      "slug": "grouping-and-legend",
+      "title": "Grouping, shapes and legend"
+     }
+    ],
+    "description": "Turning the inventory into a diagram in a chosen syntax.",
+    "slug": "diagram-output",
+    "title": "Diagram output"
+   },
+   {
+    "areas": [
+     {
+      "description": "Picking Terraform state, a Kubernetes namespace or both, and requiring at least one of them.",
+      "slug": "source-selection",
+      "title": "Source selection"
+     },
+     {
+      "description": "Writing the titled document, marked as generated and not to be hand-edited, to stdout or to a file such as ARCHITECTURE.md, and reporting the node and edge counts.",
+      "slug": "generated-document",
+      "title": "Generated document"
+     },
+     {
+      "description": "Reporting bad input as a single prefixed stderr line with sysexits-style exit codes instead of a traceback.",
+      "slug": "error-reporting",
+      "title": "Error reporting and exit codes"
+     }
+    ],
+    "description": "How someone runs arch-map and gets the generated document back.",
+    "slug": "command-line",
+    "title": "Command line"
+   },
+   {
+    "areas": [
+     {
+      "description": "A Docker image that installs the tool from hash-pinned build dependencies without fetching anything else, runs as a non-root user and uses arch-map as its entrypoint.",
+      "slug": "container-image",
+      "title": "Container image"
+     },
+     {
+      "description": "Make targets to install, do an editable dev install, build sdist and wheel, and run the CLI.",
+      "slug": "build-and-install",
+      "title": "Build and install"
+     },
+     {
+      "description": "Make targets to run the pre-commit lint gate, tests, formatting and type checking.",
+      "slug": "quality-gates",
+      "title": "Quality gates"
+     },
+     {
+      "description": "Installing the pre-commit hook and listing the available make targets.",
+      "slug": "contributor-setup",
+      "title": "Contributor setup"
+     }
+    ],
+    "description": "Building, checking, packaging and shipping arch-map.",
+    "slug": "developer-tooling",
+    "title": "Developer tooling"
+   }
+  ]
+ }
+}
