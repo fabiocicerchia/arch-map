@@ -1,7 +1,7 @@
 # arch-map is a stdlib-only Python CLI. This image installs it and runs it as
 # a non-root user. Note: to read live clusters you must also provide `kubectl`
 # (and a kubeconfig) at runtime — this base image ships neither.
-FROM python:3.14-slim@sha256:cad9a2c871761c413caa6fdd6441c783451e740a48aaeba60ae62a8b53525ef6
+FROM python:3.14-slim@sha256:9aaa474097d094040649f2162a627c0049b408f52138d980916788d80f04802f
 
 WORKDIR /app
 COPY . .
