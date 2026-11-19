@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format is based
 on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4](https://github.com/fabiocicerchia/arch-map/compare/v0.2.3...v0.2.4) (2026-11-19)
+
+
+### Bug Fixes
+
+* **ci:** quote boneyard release label so the PR number is sent ([#155](https://github.com/fabiocicerchia/arch-map/issues/155)) ([86fdc09](https://github.com/fabiocicerchia/arch-map/commit/86fdc095fa1325956003616dd16279ee0dd3d069))
+
 ## [0.2.3](https://github.com/fabiocicerchia/arch-map/compare/v0.2.2...v0.2.3) (2026-11-14)
 
 
